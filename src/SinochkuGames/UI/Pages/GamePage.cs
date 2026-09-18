@@ -10,7 +10,7 @@ public sealed class GamePage : UserControl
     private readonly ThemePalette _theme;
     private readonly GameDefinition _game;
     private readonly Label _runtime;
-    private readonly Label _playtime;
+    private Label _playtime = null!;
     private readonly Button _play;
     private readonly System.Windows.Forms.Timer _timer;
 
