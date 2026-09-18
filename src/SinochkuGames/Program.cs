@@ -27,6 +27,7 @@ internal static class Program
             var launcher = new LaunchService(steam, settingsStore, settings);
             var updater = new UpdateService(settings);
             using var playtime = new PlaytimeTracker(registry, detection, settingsStore, settings);
+            var artwork = new ArtworkService(steam);
 
             var context = new LauncherContext(
                 settingsStore,
@@ -36,7 +37,8 @@ internal static class Program
                 detection,
                 launcher,
                 updater,
-                playtime);
+                playtime,
+                artwork);
 
             if (!settings.FirstRunCompleted)
             {
