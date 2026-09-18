@@ -17,6 +17,10 @@ on:
       - "assets/**"
       - ".github/workflows/v2-*.yml"
 
+concurrency:
+  group: v2-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-test:
     runs-on: windows-latest
