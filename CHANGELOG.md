@@ -39,4 +39,5 @@
 - GitHub release updater with backup/recovery.
 - Release notes in update prompts.
 - SHA-256 update verification support.
+- One-click rollback to the previous launcher build.
 - Automated Windows CI and tests.
