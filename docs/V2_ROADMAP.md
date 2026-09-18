@@ -24,3 +24,7 @@
 - Plugin-style custom pre/post-launch hooks
 - Optional Discord Rich Presence
 - Additional СИНОЧКУ games
+
+## Validation
+
+- v2 changes are validated by the repository's Windows CI workflow before merge.
