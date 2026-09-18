@@ -30,7 +30,7 @@ public sealed class GamePage : UserControl
         back.Click += (_, _) => BackRequested?.Invoke(this, EventArgs.Empty);
         Controls.Add(back);
 
-        var hero = new HeroPanel(AssetService.LoadBySuffix(game.HeroResourceSuffix), _theme)
+        var hero = new HeroPanel(_context.Artwork.Load(game, ArtworkKind.Hero), _theme)
         {
             Location = new Point(0, 62),
             Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
@@ -42,7 +42,7 @@ public sealed class GamePage : UserControl
 
         var logo = new PictureBox
         {
-            Image = AssetService.LoadBySuffix(game.LogoResourceSuffix),
+            Image = _context.Artwork.Load(game, ArtworkKind.Logo),
             SizeMode = PictureBoxSizeMode.Zoom,
             BackColor = Color.Transparent,
             Location = new Point(36, 110),
