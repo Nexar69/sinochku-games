@@ -29,9 +29,9 @@ public sealed class UpdateService
         _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
     }
 
-    public async Task<UpdateRelease?> CheckAsync(CancellationToken cancellationToken = default)
+    public async Task<UpdateRelease?> CheckAsync(bool force = false, CancellationToken cancellationToken = default)
     {
-        if (!_settings.CheckUpdatesAutomatically)
+        if (!force && !_settings.CheckUpdatesAutomatically)
             return null;
 
         try
