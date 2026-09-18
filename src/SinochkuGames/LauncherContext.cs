@@ -10,4 +10,5 @@ public sealed record LauncherContext(
     GameRegistry Registry,
     GameDetectionService Detection,
     LaunchService Launcher,
-    UpdateService Updater);
+    UpdateService Updater,
+    PlaytimeTracker Playtime);
