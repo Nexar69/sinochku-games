@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text.Json;
 using SinochkuGames.Models;
 
@@ -13,6 +14,7 @@ public sealed class UpdateRelease
     public string Name { get; init; } = "";
     public bool Prerelease { get; init; }
     public string Notes { get; init; } = "";
+    public string Sha256Url { get; init; } = "";
 }
 
 public sealed class UpdateService
@@ -53,16 +55,26 @@ public sealed class UpdateService
                 if (!VersionHelper.IsNewer(version, Program.Version))
                     continue;
 
+                string downloadUrl = "";
+                string sha256Url = "";
                 foreach (var asset in release.GetProperty("assets").EnumerateArray())
                 {
                     var name = asset.GetProperty("name").GetString() ?? "";
-                    if (!name.Equals("SinochkuGames.exe", StringComparison.OrdinalIgnoreCase))
-                        continue;
+                    var url = asset.GetProperty("browser_download_url").GetString() ?? "";
 
+                    if (name.Equals("SinochkuGames.exe", StringComparison.OrdinalIgnoreCase))
+                        downloadUrl = url;
+                    else if (name.Equals("SinochkuGames.exe.sha256", StringComparison.OrdinalIgnoreCase))
+                        sha256Url = url;
+                }
+
+                if (!string.IsNullOrWhiteSpace(downloadUrl))
+                {
                     return new UpdateRelease
                     {
                         Version = version,
-                        DownloadUrl = asset.GetProperty("browser_download_url").GetString() ?? "",
+                        DownloadUrl = downloadUrl,
+                        Sha256Url = sha256Url,
                         HtmlUrl = release.GetProperty("html_url").GetString() ?? "",
                         Name = release.GetProperty("name").GetString() ?? tag,
                         Prerelease = prerelease,
@@ -91,6 +103,19 @@ public sealed class UpdateService
 
         var bytes = await _http.GetByteArrayAsync(release.DownloadUrl, cancellationToken);
         await File.WriteAllBytesAsync(downloaded, bytes, cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(release.Sha256Url))
+        {
+            var expectedText = await _http.GetStringAsync(release.Sha256Url, cancellationToken);
+            var expected = expectedText.Trim().Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)[0];
+            var actual = Convert.ToHexString(SHA256.HashData(bytes));
+
+            if (!actual.Equals(expected, StringComparison.OrdinalIgnoreCase))
+            {
+                File.Delete(downloaded);
+                throw new InvalidDataException("Downloaded update failed SHA-256 verification.");
+            }
+        }
 
         var processId = Environment.ProcessId;
         var ps = string.Join(Environment.NewLine, new[]
