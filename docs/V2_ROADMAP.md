@@ -13,11 +13,11 @@
 - First-run setup wizard
 - Live tracked playtime while the launcher is open
 - Release notes in update confirmations
+- Favorites / Installed filters and Recently played sorting
 - CI build/tests and single-file Windows artifacts
 
 ## Later v2 betas
 
-- Recently played and favorites filters
 - Release notes inside the launcher
 - Theme preview without restart
 - Per-game screenshots and activity feeds
