@@ -11,4 +11,5 @@ public sealed record LauncherContext(
     GameDetectionService Detection,
     LaunchService Launcher,
     UpdateService Updater,
-    PlaytimeTracker Playtime);
+    PlaytimeTracker Playtime,
+    ArtworkService Artwork);
