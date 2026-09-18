@@ -33,9 +33,17 @@ jobs:
           -p:PublishSingleFile=true
           -o dist/v2
 
+      - name: Generate SHA-256
+        shell: powershell
+        run: |
+          $hash = (Get-FileHash dist/v2/SinochkuGames.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content -Path dist/v2/SinochkuGames.exe.sha256 -Value $hash -Encoding ascii
+
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
           prerelease: ${{ contains(github.ref_name, '-') }}
           generate_release_notes: true
-          files: dist/v2/SinochkuGames.exe
+          files: |
+            dist/v2/SinochkuGames.exe
+            dist/v2/SinochkuGames.exe.sha256
