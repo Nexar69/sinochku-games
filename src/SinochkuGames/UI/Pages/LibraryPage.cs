@@ -10,6 +10,7 @@ public sealed class LibraryPage : UserControl
     private readonly FlowLayoutPanel _grid;
     private readonly TextBox _search;
     private readonly ComboBox _sort;
+    private readonly ComboBox _filter;
 
     public event EventHandler<GameDefinition>? GameSelected;
 
@@ -53,6 +54,19 @@ public sealed class LibraryPage : UserControl
         _sort.SelectedIndex = 0;
         _sort.SelectedIndexChanged += (_, _) => RefreshGames();
         Controls.Add(_sort);
+
+        _filter = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Width = 130,
+            Location = new Point(436, 72),
+            BackColor = _theme.SurfaceRaised,
+            ForeColor = _theme.Text
+        };
+        _filter.Items.AddRange(new object[] { "All games", "Favorites", "Installed" });
+        _filter.SelectedIndex = 0;
+        _filter.SelectedIndexChanged += (_, _) => RefreshGames();
+        Controls.Add(_filter);
 
         var status = BuildStatusBanner();
         status.Location = new Point(28, 116);
@@ -121,6 +135,13 @@ public sealed class LibraryPage : UserControl
                 g.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase)
                 || g.BaseGameName.Contains(query, StringComparison.CurrentCultureIgnoreCase));
         }
+
+        games = _filter.SelectedItem?.ToString() switch
+        {
+            "Favorites" => games.Where(g => _context.Settings.Favorites.Contains(g.Id)),
+            "Installed" => games.Where(g => _context.Detection.Detect(g).Installed),
+            _ => games
+        };
 
         games = _sort.SelectedItem?.ToString() switch
         {
