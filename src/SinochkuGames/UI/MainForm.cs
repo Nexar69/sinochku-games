@@ -122,9 +122,13 @@ public sealed class MainForm : Form
 
     private void ReplacePage(Control page)
     {
-        foreach (Control child in _content.Controls)
+        while (_content.Controls.Count > 0)
+        {
+            var child = _content.Controls[0];
+            _content.Controls.RemoveAt(0);
             child.Dispose();
-        _content.Controls.Clear();
+        }
+
         _content.Controls.Add(page);
     }
 
