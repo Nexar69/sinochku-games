@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.0.0-beta.2 — in development
+## v2.0.0-beta.3 — in development
 
 ### Platform
 - Modular .NET 8 launcher architecture.
