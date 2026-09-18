@@ -10,6 +10,7 @@ public sealed class GamePage : UserControl
     private readonly ThemePalette _theme;
     private readonly GameDefinition _game;
     private readonly Label _runtime;
+    private readonly Label _playtime;
     private readonly Button _play;
     private readonly System.Windows.Forms.Timer _timer;
 
@@ -120,6 +121,10 @@ public sealed class GamePage : UserControl
         lastPlayedLabel.Location = new Point(26, 104);
         info.Controls.Add(lastPlayedLabel);
 
+        _playtime = _theme.Label("", 9, FontStyle.Regular, _theme.Muted);
+        _playtime.Location = new Point(310, 104);
+        info.Controls.Add(_playtime);
+
         var steam = _theme.Button("OPEN STEAM", 120, 38);
         steam.Location = new Point(26, 140);
         steam.Click += (_, _) => _context.Steam.OpenSteam();
@@ -157,6 +162,7 @@ public sealed class GamePage : UserControl
         _runtime.ForeColor = state.Running ? _theme.Play : state.Installed ? _theme.Text : Color.FromArgb(255, 177, 80);
         _play.Text = state.Running ? "RUNNING" : "PLAY";
         _play.Enabled = state.Installed && !state.Running;
+        _playtime.Text = $"Tracked playtime: {PlaytimeTracker.Format(_context.Playtime.GetTrackedSeconds(_game.Id))}";
     }
 
     private void Launch()
