@@ -1,0 +1,11 @@
+{
+  "id": "sinochku2",
+  "name": "СИНОЧКУ 2",
+  "baseGameName": "Counter-Strike 2",
+  "steamAppId": 730,
+  "preLaunchHooks": ["SteamEditAutofix"],
+  "heroResourceSuffix": "hero.png",
+  "logoResourceSuffix": "logo.png",
+  "coverResourceSuffix": "cover.png",
+  "description": "The original cursed classic. Custom branding, the real CS2 underneath, and absolutely unnecessary amounts of effort."
+}
