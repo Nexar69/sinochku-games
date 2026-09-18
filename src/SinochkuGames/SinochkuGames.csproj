@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>SinochkuGames</AssemblyName>
+    <RootNamespace>SinochkuGames</RootNamespace>
+    <ApplicationIcon>..\..\assets\launcher.ico</ApplicationIcon>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishReadyToRun>false</PublishReadyToRun>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\assets\hero.png" Link="Assets\hero.png" />
+    <EmbeddedResource Include="..\..\assets\logo.png" Link="Assets\logo.png" />
+    <EmbeddedResource Include="..\..\assets\cover.png" Link="Assets\cover.png" />
+    <EmbeddedResource Include="Games\*.json" />
+  </ItemGroup>
+</Project>
