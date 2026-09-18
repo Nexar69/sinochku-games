@@ -149,6 +149,16 @@ public sealed class SettingsPage : UserControl
         rescan.Click += (_, _) => _steamEdit.Text = _context.Detection.ResolveSteamEdit(true);
         page.Controls.Add(rescan);
 
+        var setup = _theme.Button("RUN SETUP CHECK", 150, 36);
+        setup.Location = new Point(190, 138);
+        setup.Click += (_, _) =>
+        {
+            using var wizard = new SinochkuGames.UI.SetupWizardForm(_context);
+            wizard.ShowDialog(this);
+            _steamEdit.Text = _context.Detection.ResolveSteamEdit();
+        };
+        page.Controls.Add(setup);
+
         return page;
     }
 
@@ -175,8 +185,9 @@ public sealed class SettingsPage : UserControl
             name.Location = new Point(14, 12);
             card.Controls.Add(name);
 
+            var tracked = PlaytimeTracker.Format(_context.Playtime.GetTrackedSeconds(game.Id));
             var status = _theme.Label(
-                $"{game.BaseGameName} • {(state.Installed ? "installed" : "not installed")}",
+                $"{game.BaseGameName} • {(state.Installed ? "installed" : "not installed")} • tracked {tracked}",
                 9,
                 FontStyle.Regular,
                 state.Installed ? _theme.Accent : _theme.Muted);
