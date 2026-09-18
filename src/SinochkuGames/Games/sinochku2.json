@@ -3,6 +3,7 @@
   "name": "СИНОЧКУ 2",
   "baseGameName": "Counter-Strike 2",
   "steamAppId": 730,
+  "processName": "cs2",
   "preLaunchHooks": ["SteamEditAutofix"],
   "heroResourceSuffix": "hero.png",
   "logoResourceSuffix": "logo.png",
