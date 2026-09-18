@@ -2,6 +2,7 @@ namespace SinochkuGames.Models;
 
 public sealed class LauncherSettings
 {
+    public bool FirstRunCompleted { get; set; } = false;
     public string Theme { get; set; } = "SteamDark";
     public string AccentHex { get; set; } = "#66C0F4";
     public string UpdateChannel { get; set; } = "Stable";
