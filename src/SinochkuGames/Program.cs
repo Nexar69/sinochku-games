@@ -6,7 +6,7 @@ namespace SinochkuGames;
 internal static class Program
 {
     public const string Brand = "СИНОЧКУ GAMES™";
-    public const string Version = "2.0.0-beta.2";
+    public const string Version = "2.0.0-beta.3";
     public const string Repository = "Nexar69/sinochku-games";
 
     [STAThread]
