@@ -4,6 +4,7 @@
 
 - Modular .NET 8 Windows launcher
 - Data-driven embedded game registry
+- Safe LocalAppData custom-game manifests for future expansion
 - Steam-style library, search, sorting, and game detail pages
 - Appearance / Updates / Steam / Games / About settings
 - Steam + Steam library + CS2 detection
