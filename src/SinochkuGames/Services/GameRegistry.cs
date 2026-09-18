@@ -104,8 +104,11 @@ public sealed class GameRegistry
     {
         if (string.IsNullOrWhiteSpace(game.Id)
             || string.IsNullOrWhiteSpace(game.Name)
+            || game.SteamAppId is not > 0
             || game.Id.Any(ch => !(char.IsLetterOrDigit(ch) || ch is '-' or '_' or '.')))
             return false;
+
+        game.PreLaunchHooks ??= Array.Empty<string>();
 
         var allowedHooks = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
