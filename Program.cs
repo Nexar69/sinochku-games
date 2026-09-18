@@ -269,8 +269,9 @@ namespace Sinochku2Launcher
                 wc.DownloadFile(info.DownloadUrl, downloaded);
             }
 
+            int currentPid = Process.GetCurrentProcess().Id;
             string ps =
-                "Start-Sleep -Seconds 2\r\n" +
+                "while (Get-Process -Id " + currentPid + " -ErrorAction SilentlyContinue) { Start-Sleep -Milliseconds 250 }\r\n" +
                 "Copy-Item -LiteralPath '" + PsEscape(downloaded) +
                 "' -Destination '" + PsEscape(current) + "' -Force\r\n" +
                 "Start-Process -FilePath '" + PsEscape(current) + "'\r\n" +
@@ -635,8 +636,8 @@ namespace Sinochku2Launcher
         void BuildLibraryPage()
         {
             libraryPage = new Panel();
-            libraryPage.Location = new Point(220, 48);
-            libraryPage.Size = new Size(960, 672);
+            libraryPage.Location = new Point(0, 48);
+            libraryPage.Size = new Size(1180, 672);
             libraryPage.BackColor = Color.FromArgb(35, 44, 58);
             Controls.Add(libraryPage);
 
@@ -706,8 +707,8 @@ namespace Sinochku2Launcher
         void BuildSettingsPage()
         {
             settingsPage = new Panel();
-            settingsPage.Location = new Point(220, 48);
-            settingsPage.Size = new Size(960, 672);
+            settingsPage.Location = new Point(0, 48);
+            settingsPage.Size = new Size(1180, 672);
             settingsPage.BackColor = Color.FromArgb(28, 38, 50);
             settingsPage.Visible = false;
             Controls.Add(settingsPage);
@@ -749,6 +750,7 @@ namespace Sinochku2Launcher
         void ShowLibraryPage()
         {
             if (settingsPage != null) settingsPage.Visible = false;
+            if (gameSidebar != null) gameSidebar.Visible = false;
             if (libraryPage != null)
             {
                 libraryPage.Visible = true;
@@ -760,6 +762,7 @@ namespace Sinochku2Launcher
         {
             if (libraryPage != null) libraryPage.Visible = false;
             if (settingsPage != null) settingsPage.Visible = false;
+            if (gameSidebar != null) gameSidebar.Visible = true;
             heroBox.BringToFront();
             if (gameSidebar != null) gameSidebar.BringToFront();
         }
@@ -767,6 +770,7 @@ namespace Sinochku2Launcher
         void ShowSettingsPage()
         {
             if (libraryPage != null) libraryPage.Visible = false;
+            if (gameSidebar != null) gameSidebar.Visible = false;
             if (settingsPage != null)
             {
                 settingsPage.Visible = true;
