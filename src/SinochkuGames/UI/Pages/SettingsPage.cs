@@ -113,6 +113,39 @@ public sealed class SettingsPage : UserControl
             MessageBox.Show("Update settings saved.", Program.Brand);
         };
         page.Controls.Add(save);
+
+        var check = _theme.Button("CHECK NOW", 120, 40);
+        check.Location = new Point(230, 170);
+        check.Click += async (_, _) =>
+        {
+            check.Enabled = false;
+            check.Text = "CHECKING...";
+            try
+            {
+                var release = await _context.Updater.CheckAsync(force: true);
+                if (release is null)
+                {
+                    MessageBox.Show($"You're up to date on v{Program.Version}.", Program.Brand);
+                    return;
+                }
+
+                var notes = string.IsNullOrWhiteSpace(release.Notes)
+                    ? "No release notes."
+                    : release.Notes.Length > 900 ? release.Notes[..900] + "…" : release.Notes;
+
+                MessageBox.Show(
+                    $"{release.Name}\n\n{notes}",
+                    $"Update {release.Version} available",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            finally
+            {
+                check.Enabled = true;
+                check.Text = "CHECK NOW";
+            }
+        };
+        page.Controls.Add(check);
         return page;
     }
 
