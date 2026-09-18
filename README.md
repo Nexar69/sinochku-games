@@ -2,7 +2,7 @@
 
 A custom Steam-style Windows game launcher for the СИНОЧКУ meme universe.
 
-> v2 is a modular rewrite currently being validated in PR #1. v1.1 remains the stable public release until v2 is ready.
+> v2 has been merged into `main` as the next-generation launcher code. v1.1 remains the stable public release until the v2 beta is packaged for testing.
 
 ## Current games
 
