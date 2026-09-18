@@ -9,11 +9,13 @@ public static class AppPaths
     public static string SettingsFile => Path.Combine(Root, "settings.json");
     public static string LogDirectory => Path.Combine(Root, "logs");
     public static string UpdateDirectory => Path.Combine(Root, "updates");
+    public static string CustomGamesDirectory => Path.Combine(Root, "games");
 
     public static void EnsureCreated()
     {
         Directory.CreateDirectory(Root);
         Directory.CreateDirectory(LogDirectory);
         Directory.CreateDirectory(UpdateDirectory);
+        Directory.CreateDirectory(CustomGamesDirectory);
     }
 }
