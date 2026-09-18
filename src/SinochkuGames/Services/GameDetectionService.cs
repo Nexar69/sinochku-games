@@ -70,6 +70,7 @@ public sealed class GameDetectionService
             $"{game.Name}: {(state.Installed ? state.InstallPath : "not detected")}",
             $"SteamEdit: {(File.Exists(steamEdit) ? steamEdit : "not detected")}",
             $"Running: {state.Running}",
+            $"Tracked playtime: {PlaytimeTracker.Format(_settings.TrackedPlaySeconds.TryGetValue(game.Id, out var tracked) ? tracked : 0)}",
             $"Update channel: {_settings.UpdateChannel}",
             $"Logs: {AppPaths.LogDirectory}"
         });
