@@ -19,7 +19,8 @@ public sealed class GameDetectionService
     public GameRuntimeState Detect(GameDefinition game)
     {
         var path = game.SteamAppId is int appId ? _steam.FindInstalledApp(appId) : "";
-        var running = game.SteamAppId == 730 && Process.GetProcessesByName("cs2").Length > 0;
+        var running = !string.IsNullOrWhiteSpace(game.ProcessName)
+            && Process.GetProcessesByName(game.ProcessName).Length > 0;
 
         return new GameRuntimeState
         {
