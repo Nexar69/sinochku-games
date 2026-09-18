@@ -91,22 +91,23 @@ public sealed class UpdateService
         await File.WriteAllBytesAsync(downloaded, bytes, cancellationToken);
 
         var processId = Environment.ProcessId;
-        var ps = $"""
-$ErrorActionPreference = 'Stop'
-while (Get-Process -Id {processId} -ErrorAction SilentlyContinue) {{ Start-Sleep -Milliseconds 250 }}
-$current = '{EscapePs(current)}'
-$new = '{EscapePs(downloaded)}'
-$backup = '{EscapePs(backup)}'
-try {{
-    if (Test-Path $backup) {{ Remove-Item $backup -Force }}
-    Copy-Item $current $backup -Force
-    Copy-Item $new $current -Force
-    Start-Process $current
-}} catch {{
-    if (Test-Path $backup) {{ Copy-Item $backup $current -Force }}
-    Start-Process $current
-}}
-""";
+        var ps = string.Join(Environment.NewLine, new[]
+        {
+            "$ErrorActionPreference = 'Stop'",
+            $"while (Get-Process -Id {processId} -ErrorAction SilentlyContinue) {{ Start-Sleep -Milliseconds 250 }}",
+            $"$current = '{EscapePs(current)}'",
+            $"$new = '{EscapePs(downloaded)}'",
+            $"$backup = '{EscapePs(backup)}'",
+            "try {",
+            "    if (Test-Path $backup) { Remove-Item $backup -Force }",
+            "    Copy-Item $current $backup -Force",
+            "    Copy-Item $new $current -Force",
+            "    Start-Process $current",
+            "} catch {",
+            "    if (Test-Path $backup) { Copy-Item $backup $current -Force }",
+            "    Start-Process $current",
+            "}"
+        }) + Environment.NewLine;
 
         await File.WriteAllTextAsync(script, ps, cancellationToken);
 
