@@ -10,8 +10,29 @@ public sealed class GameRegistry
 
     public GameRegistry()
     {
-        _games = LoadEmbeddedGames();
-        LogService.Info($"Loaded {_games.Count} game definition(s)");
+        var embedded = LoadEmbeddedGames();
+        var external = LoadExternalGames();
+
+        var merged = new Dictionary<string, GameDefinition>(StringComparer.OrdinalIgnoreCase);
+        foreach (var game in embedded)
+            merged[game.Id] = game;
+
+        foreach (var game in external)
+        {
+            if (merged.ContainsKey(game.Id))
+            {
+                LogService.Warn($"Ignoring external game '{game.Id}' because that ID is built in.");
+                continue;
+            }
+
+            merged[game.Id] = game;
+        }
+
+        _games = merged.Values
+            .OrderBy(g => g.Name, StringComparer.CurrentCultureIgnoreCase)
+            .ToArray();
+
+        LogService.Info($"Loaded {_games.Count} game definition(s) ({external.Count} custom)");
     }
 
     public IReadOnlyList<GameDefinition> Games => _games;
@@ -38,5 +59,59 @@ public sealed class GameRegistry
         }
 
         return games.OrderBy(g => g.Name, StringComparer.CurrentCultureIgnoreCase).ToArray();
+    }
+
+    private static IReadOnlyList<GameDefinition> LoadExternalGames()
+    {
+        var result = new List<GameDefinition>();
+        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+        try
+        {
+            Directory.CreateDirectory(AppPaths.CustomGamesDirectory);
+
+            foreach (var file in Directory.EnumerateFiles(AppPaths.CustomGamesDirectory, "*.json"))
+            {
+                try
+                {
+                    var game = JsonSerializer.Deserialize<GameDefinition>(
+                        File.ReadAllText(file),
+                        options);
+
+                    if (game is null || !IsSafeDefinition(game))
+                    {
+                        LogService.Warn($"Ignoring invalid custom game manifest: {file}");
+                        continue;
+                    }
+
+                    result.Add(game);
+                }
+                catch (Exception ex)
+                {
+                    LogService.Warn($"Could not read custom game manifest {file}: {ex.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            LogService.Warn($"Could not scan custom game manifests: {ex.Message}");
+        }
+
+        return result;
+    }
+
+    private static bool IsSafeDefinition(GameDefinition game)
+    {
+        if (string.IsNullOrWhiteSpace(game.Id)
+            || string.IsNullOrWhiteSpace(game.Name)
+            || game.Id.Any(ch => !(char.IsLetterOrDigit(ch) || ch is '-' or '_' or '.')))
+            return false;
+
+        var allowedHooks = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "SteamEditAutofix"
+        };
+
+        return game.PreLaunchHooks.All(hook => allowedHooks.Contains(hook));
     }
 }
