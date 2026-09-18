@@ -202,6 +202,13 @@ public sealed class SettingsPage : UserControl
         title.Location = new Point(28, 28);
         page.Controls.Add(title);
 
+        var custom = _theme.Button("OPEN CUSTOM GAMES FOLDER", 210, 36);
+        custom.Location = new Point(560, 22);
+        custom.Click += (_, _) => Process.Start(new ProcessStartInfo(
+            "explorer.exe",
+            $"\"{AppPaths.CustomGamesDirectory}\"") { UseShellExecute = true });
+        page.Controls.Add(custom);
+
         var y = 72;
         foreach (var game in _context.Registry.Games)
         {
