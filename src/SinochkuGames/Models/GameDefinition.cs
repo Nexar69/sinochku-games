@@ -6,6 +6,7 @@ public sealed class GameDefinition
     public string Name { get; set; } = "";
     public string BaseGameName { get; set; } = "";
     public int? SteamAppId { get; set; }
+    public string ProcessName { get; set; } = "";
     public string[] PreLaunchHooks { get; set; } = Array.Empty<string>();
     public string HeroResourceSuffix { get; set; } = "hero.png";
     public string LogoResourceSuffix { get; set; } = "logo.png";
