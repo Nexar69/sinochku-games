@@ -13,15 +13,15 @@ v2 changes the launcher from a single hard-coded CS2 window into a small data-dr
 
 ## Game registry
 
-Every game definition declares a stable ID, display name, base game, Steam AppID, pre-launch hooks, artwork resource names, and description.
+Every game definition declares a stable ID, display name, base game, Steam AppID, runtime process name, pre-launch hooks, artwork resource names, and description.
 
-СИНОЧКУ 2 currently uses the SteamEditAutofix pre-launch hook and Steam AppID 730.
+СИНОЧКУ 2 currently uses the SteamEditAutofix pre-launch hook, Steam AppID 730, and process name `cs2`. Runtime detection is data-driven rather than hard-coded to CS2.
 
 ## Local data
 
 User-specific state lives under %LocalAppData%\SinochkuGames.
 
-This includes settings, logs, and updater staging files. Repository assets and game definitions remain read-only inside the app.
+This includes settings, logs, tracked playtime, and updater staging files. Repository assets and game definitions remain read-only inside the app. When Steam custom artwork exists for the selected app, the launcher prefers it over embedded fallback artwork.
 
 ## Update channels
 
