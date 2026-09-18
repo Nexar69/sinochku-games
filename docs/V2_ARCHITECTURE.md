@@ -13,7 +13,7 @@ v2 changes the launcher from a single hard-coded CS2 window into a small data-dr
 
 ## Game registry
 
-Every game definition declares a stable ID, display name, base game, Steam AppID, runtime process name, pre-launch hooks, artwork resource names, and description.
+Every game definition declares a stable ID, display name, base game, Steam AppID, runtime process name, pre-launch hooks, artwork resource names, and description. Built-in definitions are embedded in the executable. Additional safe JSON definitions can be dropped into `%LocalAppData%\\SinochkuGames\\games`; built-in IDs cannot be overridden and only whitelisted launch hooks are accepted.
 
 СИНОЧКУ 2 currently uses the SteamEditAutofix pre-launch hook, Steam AppID 730, and process name `cs2`. Runtime detection is data-driven rather than hard-coded to CS2.
 
