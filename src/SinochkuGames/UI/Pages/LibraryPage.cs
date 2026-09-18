@@ -152,7 +152,7 @@ public sealed class LibraryPage : UserControl
             Location = new Point(5, 5),
             Size = new Size(220, 330),
             SizeMode = PictureBoxSizeMode.Zoom,
-            Image = AssetService.LoadBySuffix(game.CoverResourceSuffix),
+            Image = _context.Artwork.Load(game, ArtworkKind.Cover),
             BackColor = Color.FromArgb(15, 20, 28),
             Cursor = Cursors.Hand
         };
