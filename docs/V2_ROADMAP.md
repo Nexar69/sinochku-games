@@ -14,6 +14,7 @@
 - First-run setup wizard
 - Live tracked playtime while the launcher is open
 - Release notes in update confirmations
+- Updater SHA-256 verification and one-click rollback
 - Favorites / Installed filters and Recently played sorting
 - CI build/tests and single-file Windows artifacts
 
@@ -22,7 +23,6 @@
 - Release notes inside the launcher
 - Theme preview without restart
 - Per-game screenshots and activity feeds
-- Updater rollback button and integrity hashes
 - Plugin-style custom pre/post-launch hooks
 - Optional Discord Rich Presence
 - Additional СИНОЧКУ games
