@@ -6,7 +6,7 @@ namespace SinochkuGames;
 internal static class Program
 {
     public const string Brand = "СИНОЧКУ GAMES™";
-    public const string Version = "2.0.0-beta.1";
+    public const string Version = "2.0.0-beta.2";
     public const string Repository = "Nexar69/sinochku-games";
 
     [STAThread]
@@ -26,6 +26,7 @@ internal static class Program
             var detection = new GameDetectionService(steam, settingsStore, settings);
             var launcher = new LaunchService(steam, settingsStore, settings);
             var updater = new UpdateService(settings);
+            using var playtime = new PlaytimeTracker(registry, detection, settingsStore, settings);
 
             var context = new LauncherContext(
                 settingsStore,
@@ -34,7 +35,14 @@ internal static class Program
                 registry,
                 detection,
                 launcher,
-                updater);
+                updater,
+                playtime);
+
+            if (!settings.FirstRunCompleted)
+            {
+                using var setup = new SetupWizardForm(context);
+                setup.ShowDialog();
+            }
 
             Application.Run(new MainForm(context));
         }
