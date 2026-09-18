@@ -146,6 +146,33 @@ public sealed class SettingsPage : UserControl
             }
         };
         page.Controls.Add(check);
+
+        var rollback = _theme.Button("ROLL BACK", 120, 40);
+        rollback.Location = new Point(362, 170);
+        rollback.Enabled = _context.Updater.CanRollback;
+        rollback.Click += async (_, _) =>
+        {
+            var answer = MessageBox.Show(
+                "Restore the previous launcher version?\n\nThe launcher will restart automatically.",
+                Program.Brand,
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
+            if (answer != DialogResult.Yes) return;
+
+            rollback.Enabled = false;
+            rollback.Text = "ROLLING BACK...";
+            try
+            {
+                await _context.Updater.RollbackAsync();
+            }
+            catch (Exception ex)
+            {
+                rollback.Enabled = true;
+                rollback.Text = "ROLL BACK";
+                MessageBox.Show(ex.Message, "Rollback failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        };
+        page.Controls.Add(rollback);
         return page;
     }
 
