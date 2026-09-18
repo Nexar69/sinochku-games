@@ -1,0 +1,5 @@
+dist/
+*.before_*
+*Snippet.txt
+MainFormReplacement*.txt
+*.zip
