@@ -93,7 +93,7 @@ public sealed class SteamLocator
         try
         {
             using var key = Registry.CurrentUser.OpenSubKey(@"Software\Valve\Steam");
-            var path = key?.GetValue("SteamPath")?.ToString()?.Replace('/', '\');
+            var path = key?.GetValue("SteamPath")?.ToString()?.Replace('/', '\\');
             if (!string.IsNullOrWhiteSpace(path) && File.Exists(Path.Combine(path, "steam.exe")))
                 return path;
         }
