@@ -149,5 +149,44 @@ public sealed class UpdateService
         Application.Exit();
     }
 
+    public bool CanRollback =>
+        File.Exists(Path.Combine(AppPaths.UpdateDirectory, "SinochkuGames.previous.exe"));
+
+    public async Task RollbackAsync(CancellationToken cancellationToken = default)
+    {
+        AppPaths.EnsureCreated();
+
+        var backup = Path.Combine(AppPaths.UpdateDirectory, "SinochkuGames.previous.exe");
+        if (!File.Exists(backup))
+            throw new FileNotFoundException("No previous launcher version is available.");
+
+        var current = Environment.ProcessPath
+                      ?? throw new InvalidOperationException("Current executable path is unavailable.");
+        var script = Path.Combine(AppPaths.UpdateDirectory, "apply-rollback.ps1");
+        var processId = Environment.ProcessId;
+
+        var ps = string.Join(Environment.NewLine, new[]
+        {
+            "$ErrorActionPreference = 'Stop'",
+            $"while (Get-Process -Id {processId} -ErrorAction SilentlyContinue) {{ Start-Sleep -Milliseconds 250 }}",
+            $"$current = '{EscapePs(current)}'",
+            $"$backup = '{EscapePs(backup)}'",
+            "Copy-Item $backup $current -Force",
+            "Start-Process $current"
+        }) + Environment.NewLine;
+
+        await File.WriteAllTextAsync(script, ps, cancellationToken);
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "powershell.exe",
+            Arguments = $"-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"{script}\"",
+            UseShellExecute = false,
+            CreateNoWindow = true
+        });
+
+        Application.Exit();
+    }
+
     private static string EscapePs(string value) => value.Replace("'", "''");
 }
