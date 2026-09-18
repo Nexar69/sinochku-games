@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>SinochkuGames</AssemblyName>
+    <RootNamespace>SinochkuGames</RootNamespace>
+    <Version>2.0.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="..\assets\hero.png" Link="Assets\hero.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\assets\logo.png" Link="Assets\logo.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\assets\cover.png" Link="Assets\cover.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
