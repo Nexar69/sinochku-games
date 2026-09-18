@@ -12,6 +12,7 @@ public sealed class UpdateRelease
     public string HtmlUrl { get; init; } = "";
     public string Name { get; init; } = "";
     public bool Prerelease { get; init; }
+    public string Notes { get; init; } = "";
 }
 
 public sealed class UpdateService
@@ -64,7 +65,8 @@ public sealed class UpdateService
                         DownloadUrl = asset.GetProperty("browser_download_url").GetString() ?? "",
                         HtmlUrl = release.GetProperty("html_url").GetString() ?? "",
                         Name = release.GetProperty("name").GetString() ?? tag,
-                        Prerelease = prerelease
+                        Prerelease = prerelease,
+                        Notes = release.TryGetProperty("body", out var body) ? body.GetString() ?? "" : ""
                     };
                 }
             }
