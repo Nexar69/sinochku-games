@@ -13,6 +13,18 @@ internal static class Program
     private static void Main()
     {
         ApplicationConfiguration.Initialize();
+
+        using var singleInstance = new Mutex(true, @"Local\SinochkuGames", out var firstInstance);
+        if (!firstInstance)
+        {
+            MessageBox.Show(
+                $"{Brand} is already running.",
+                Brand,
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
         AppPaths.EnsureCreated();
         LogService.Initialize();
         LogService.Info($"Starting {Brand} v{Version}");
