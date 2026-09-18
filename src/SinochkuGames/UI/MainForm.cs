@@ -154,8 +154,14 @@ public sealed class MainForm : Form
     {
         if (_pendingUpdate is null) return;
 
+        var notes = string.IsNullOrWhiteSpace(_pendingUpdate.Notes)
+            ? ""
+            : "\n\nWhat's new:\n" + (_pendingUpdate.Notes.Length > 700
+                ? _pendingUpdate.Notes[..700] + "…"
+                : _pendingUpdate.Notes);
+
         var answer = MessageBox.Show(
-            $"Install {Program.Brand} {_pendingUpdate.Version}?\n\nThe launcher will restart automatically.",
+            $"Install {Program.Brand} {_pendingUpdate.Version}?\n\nThe launcher will restart automatically.{notes}",
             Program.Brand,
             MessageBoxButtons.YesNo,
             MessageBoxIcon.Information);
