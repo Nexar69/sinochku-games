@@ -1,6 +1,8 @@
 namespace SinochkuGames.Models;
 
 public sealed record SocialShowcase(Guid Id, string Title, string Body, int SortOrder);
+public sealed record SocialAchievement(string Id, string Name, string Description, bool Unlocked);
+public sealed record SocialProfileComment(Guid Id, SocialFriend Author, string Body, DateTimeOffset CreatedAtUtc);
 
 public sealed record SocialProfile(
     string Id,
@@ -18,7 +20,8 @@ public sealed record SocialProfile(
     bool IsFounder,
     long TotalPlaySeconds,
     IReadOnlyList<SocialShowcase> Showcases,
-    IReadOnlyList<string> Badges);
+    IReadOnlyList<string> Badges,
+    IReadOnlyList<SocialAchievement> Achievements);
 
 public sealed record SocialFriend(
     string Id,
