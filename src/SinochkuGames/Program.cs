@@ -40,7 +40,7 @@ internal static class Program
             var updater = new UpdateService(settings);
             using var playtime = new PlaytimeTracker(registry, detection, settingsStore, settings);
             var artwork = new ArtworkService(steam);
-            await using var social = new SocialService(settings, settingsStore, registry, detection);
+            var social = new SocialService(settings, settingsStore, registry, detection);
 
             var context = new LauncherContext(
                 settingsStore,
@@ -62,7 +62,7 @@ internal static class Program
 
             if (settings.SocialEnabled)
             {
-                var restored = await social.TryRestoreAsync();
+                var restored = social.TryRestoreAsync().GetAwaiter().GetResult();
                 if (!restored)
                 {
                     using var auth = new SocialAuthForm(context);
@@ -70,7 +70,14 @@ internal static class Program
                 }
             }
 
-            Application.Run(new MainForm(context));
+            try
+            {
+                Application.Run(new MainForm(context));
+            }
+            finally
+            {
+                social.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            }
         }
         catch (Exception ex)
         {
