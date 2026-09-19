@@ -1,3 +1,4 @@
+using SinochkuGames.Models;
 using SinochkuGames.Services;
 using SinochkuGames.UI.Pages;
 
@@ -9,9 +10,15 @@ public sealed class MainForm : Form
     private readonly ThemePalette _theme;
     private readonly Panel _content = new() { Dock = DockStyle.Fill };
     private readonly Button _libraryButton;
+    private readonly Button _communityButton;
+    private readonly Button _profileButton;
+    private readonly Button _friendsButton;
     private readonly Button _settingsButton;
+    private readonly Button _chatButton;
+    private readonly Button _notificationButton;
     private readonly Button _updateButton;
     private UpdateRelease? _pendingUpdate;
+    private FriendsChatForm? _chatForm;
 
     public MainForm(LauncherContext context)
     {
@@ -21,30 +28,56 @@ public sealed class MainForm : Form
         Text = Program.Brand;
         BackColor = _theme.Window;
         ForeColor = _theme.Text;
-        MinimumSize = new Size(980, 680);
-        Size = new Size(1220, 800);
+        MinimumSize = new Size(1120, 720);
+        Size = new Size(1320, 840);
         StartPosition = FormStartPosition.CenterScreen;
         Font = new Font("Segoe UI", 10f);
 
         var nav = new Panel
         {
             Dock = DockStyle.Top,
-            Height = 56,
+            Height = 58,
             BackColor = Color.FromArgb(23, 26, 33),
             Padding = new Padding(18, 8, 18, 8)
         };
 
         var brand = _theme.Label(Program.Brand, 15, FontStyle.Bold);
-        brand.Location = new Point(18, 16);
+        brand.Location = new Point(18, 17);
+        brand.Cursor = Cursors.Hand;
+        brand.Click += (_, _) => ShowLibrary();
         nav.Controls.Add(brand);
 
-        _libraryButton = NavButton("LIBRARY", 260);
+        _libraryButton = NavButton("LIBRARY", 230);
         _libraryButton.Click += (_, _) => ShowLibrary();
         nav.Controls.Add(_libraryButton);
 
-        _settingsButton = NavButton("SETTINGS", 360);
+        _communityButton = NavButton("COMMUNITY", 320, 104);
+        _communityButton.Click += (_, _) => ShowCommunity();
+        nav.Controls.Add(_communityButton);
+
+        _profileButton = NavButton("PROFILE", 430);
+        _profileButton.Click += (_, _) => ShowProfile();
+        nav.Controls.Add(_profileButton);
+
+        _friendsButton = NavButton("FRIENDS", 520);
+        _friendsButton.Click += (_, _) => ShowFriends();
+        nav.Controls.Add(_friendsButton);
+
+        _settingsButton = NavButton("SETTINGS", 610);
         _settingsButton.Click += (_, _) => ShowSettings();
         nav.Controls.Add(_settingsButton);
+
+        _notificationButton = _theme.Button("🔔", 48, 34);
+        _notificationButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        _notificationButton.Location = new Point(nav.Width - 414, 11);
+        _notificationButton.Click += (_, _) => ShowCommunity();
+        nav.Controls.Add(_notificationButton);
+
+        _chatButton = _theme.Button("FRIENDS & CHAT", 150, 34);
+        _chatButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+        _chatButton.Location = new Point(nav.Width - 356, 11);
+        _chatButton.Click += async (_, _) => await OpenChatAsync();
+        nav.Controls.Add(_chatButton);
 
         _updateButton = _theme.Button("UPDATE", 150, 34);
         _updateButton.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -52,27 +85,59 @@ public sealed class MainForm : Form
         _updateButton.Visible = false;
         _updateButton.Click += async (_, _) => await InstallPendingUpdateAsync();
         nav.Controls.Add(_updateButton);
-        nav.Resize += (_, _) => _updateButton.Left = nav.ClientSize.Width - _updateButton.Width - 18;
+
+        nav.Resize += (_, _) =>
+        {
+            _notificationButton.Left = nav.ClientSize.Width - 414;
+            _chatButton.Left = nav.ClientSize.Width - 356;
+            _updateButton.Left = nav.ClientSize.Width - 178;
+        };
 
         Controls.Add(_content);
         Controls.Add(nav);
+
+        _context.Social.NotificationReceived += OnNotificationReceived;
+        _context.Social.MessageReceived += OnMessageReceived;
+        _context.Social.FriendRequestReceived += OnFriendRequestReceived;
+        _context.Social.FriendsChanged += OnFriendsChanged;
+        _context.Social.CurrentUserChanged += OnCurrentUserChanged;
 
         Shown += async (_, _) =>
         {
             ShowLibrary();
             await CheckForUpdatesAsync();
+            await RefreshSocialBadgesAsync();
+
+            if (_context.Settings.SocialEnabled
+                && _context.Social.IsSignedIn
+                && !_context.Settings.StartFriendsChatMinimized)
+            {
+                // Keep chat opt-in from the button by default; this flag is reserved for later behavior.
+            }
+        };
+
+        FormClosed += (_, _) =>
+        {
+            _context.Social.NotificationReceived -= OnNotificationReceived;
+            _context.Social.MessageReceived -= OnMessageReceived;
+            _context.Social.FriendRequestReceived -= OnFriendRequestReceived;
+            _context.Social.FriendsChanged -= OnFriendsChanged;
+            _context.Social.CurrentUserChanged -= OnCurrentUserChanged;
+
+            if (_chatForm is { IsDisposed: false })
+                _chatForm.Close();
         };
     }
 
-    private Button NavButton(string text, int left)
+    private Button NavButton(string text, int left, int width = 90)
     {
         var button = new Button
         {
             Text = text,
             Left = left,
             Top = 10,
-            Width = 90,
-            Height = 34,
+            Width = width,
+            Height = 36,
             BackColor = Color.Transparent,
             ForeColor = _theme.Text,
             FlatStyle = FlatStyle.Flat,
@@ -92,6 +157,43 @@ public sealed class MainForm : Form
             Dock = DockStyle.Fill
         };
         page.GameSelected += (_, game) => ShowGame(game.Id);
+        ReplacePage(page);
+    }
+
+    private void ShowCommunity()
+    {
+        SetActive(_communityButton);
+        var page = new CommunityPage(_context, _theme)
+        {
+            Dock = DockStyle.Fill
+        };
+        page.ProfileRequested += (_, username) => ShowProfile(username);
+        page.LoginRequested += (_, _) => LoginSocial();
+        ReplacePage(page);
+    }
+
+    private void ShowProfile(string? username = null)
+    {
+        SetActive(_profileButton);
+        var page = new ProfilePage(_context, _theme, username)
+        {
+            Dock = DockStyle.Fill
+        };
+        page.MessageRequested += async (_, name) => await OpenChatAsync(name);
+        page.LoginRequested += (_, _) => LoginSocial();
+        ReplacePage(page);
+    }
+
+    private void ShowFriends()
+    {
+        SetActive(_friendsButton);
+        var page = new FriendsPage(_context, _theme)
+        {
+            Dock = DockStyle.Fill
+        };
+        page.ProfileRequested += (_, username) => ShowProfile(username);
+        page.MessageRequested += async (_, username) => await OpenChatAsync(username);
+        page.LoginRequested += (_, _) => LoginSocial();
         ReplacePage(page);
     }
 
@@ -117,7 +219,41 @@ public sealed class MainForm : Form
             Dock = DockStyle.Fill
         };
         page.LibraryRequested += (_, _) => ShowLibrary();
+        page.SocialLoginRequested += (_, _) => LoginSocial();
         ReplacePage(page);
+    }
+
+    private void LoginSocial()
+    {
+        using var auth = new SocialAuthForm(_context);
+        if (auth.ShowDialog(this) == DialogResult.OK)
+        {
+            _context.Settings.SocialEnabled = true;
+            _context.SettingsStore.Save(_context.Settings);
+            ShowProfile();
+            _ = RefreshSocialBadgesAsync();
+        }
+    }
+
+    private async Task OpenChatAsync(string? username = null)
+    {
+        if (!_context.Social.IsSignedIn)
+        {
+            LoginSocial();
+            if (!_context.Social.IsSignedIn) return;
+        }
+
+        if (_chatForm is null || _chatForm.IsDisposed)
+        {
+            _chatForm = new FriendsChatForm(_context, username);
+            _chatForm.Show(this);
+            return;
+        }
+
+        _chatForm.Show();
+        _chatForm.Activate();
+        if (!string.IsNullOrWhiteSpace(username))
+            await _chatForm.OpenByUsernameAsync(username);
     }
 
     private void ReplacePage(Control page)
@@ -134,8 +270,43 @@ public sealed class MainForm : Form
 
     private void SetActive(Button active)
     {
-        _libraryButton.ForeColor = ReferenceEquals(active, _libraryButton) ? _theme.Accent : _theme.Text;
-        _settingsButton.ForeColor = ReferenceEquals(active, _settingsButton) ? _theme.Accent : _theme.Text;
+        var buttons = new[]
+        {
+            _libraryButton, _communityButton, _profileButton, _friendsButton, _settingsButton
+        };
+
+        foreach (var button in buttons)
+            button.ForeColor = ReferenceEquals(active, button) ? _theme.Accent : _theme.Text;
+    }
+
+    private async Task RefreshSocialBadgesAsync()
+    {
+        if (!_context.Social.IsSignedIn)
+        {
+            _chatButton.Text = "FRIENDS & CHAT";
+            _notificationButton.Text = "🔔";
+            return;
+        }
+
+        try
+        {
+            var conversations = await _context.Social.Api.ConversationsAsync();
+            var notifications = await _context.Social.Api.NotificationsAsync();
+            var unreadMessages = conversations.Sum(x => x.UnreadCount);
+            var unreadNotifications = notifications.Count(x => !x.IsRead);
+
+            _chatButton.Text = unreadMessages > 0
+                ? $"FRIENDS & CHAT ({unreadMessages})"
+                : "FRIENDS & CHAT";
+
+            _notificationButton.Text = unreadNotifications > 0
+                ? $"🔔 {unreadNotifications}"
+                : "🔔";
+        }
+        catch
+        {
+            _chatButton.Text = "FRIENDS & CHAT";
+        }
     }
 
     private async Task CheckForUpdatesAsync()
@@ -182,5 +353,84 @@ public sealed class MainForm : Form
             _updateButton.Text = $"UPDATE {_pendingUpdate.Version}";
             MessageBox.Show(ex.Message, "Update failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }
+
+    private void OnNotificationReceived(SocialNotification notification)
+    {
+        if (IsDisposed) return;
+        if (InvokeRequired)
+        {
+            BeginInvoke(() => OnNotificationReceived(notification));
+            return;
+        }
+
+        if (_context.Settings.ShowSocialToasts)
+            SocialToastForm.ShowNotification(notification, _theme);
+
+        _ = RefreshSocialBadgesAsync();
+    }
+
+    private async void OnMessageReceived(SocialMessage message)
+    {
+        if (IsDisposed) return;
+        if (InvokeRequired)
+        {
+            BeginInvoke(() => OnMessageReceived(message));
+            return;
+        }
+
+        if (_context.Settings.ShowSocialToasts
+            && (_chatForm is null || _chatForm.IsDisposed || !_chatForm.Focused))
+        {
+            var sender = "New message";
+            try
+            {
+                var friends = await _context.Social.Api.FriendsAsync();
+                sender = friends.FirstOrDefault(x => x.Id == message.SenderId)?.DisplayName ?? sender;
+            }
+            catch { }
+
+            SocialToastForm.ShowMessage(message, sender, _theme);
+        }
+
+        await RefreshSocialBadgesAsync();
+    }
+
+    private async void OnFriendRequestReceived(SocialFriendRequest _)
+    {
+        if (IsDisposed) return;
+        if (InvokeRequired)
+        {
+            BeginInvoke(() => OnFriendRequestReceived(_));
+            return;
+        }
+        await RefreshSocialBadgesAsync();
+    }
+
+    private async void OnFriendsChanged()
+    {
+        if (IsDisposed) return;
+        if (InvokeRequired)
+        {
+            BeginInvoke(OnFriendsChanged);
+            return;
+        }
+        await RefreshSocialBadgesAsync();
+    }
+
+    private void OnCurrentUserChanged(SocialProfile? profile)
+    {
+        if (IsDisposed) return;
+        if (InvokeRequired)
+        {
+            BeginInvoke(() => OnCurrentUserChanged(profile));
+            return;
+        }
+
+        _profileButton.Text = profile is null
+            ? "PROFILE"
+            : profile.DisplayName.Length > 12
+                ? profile.DisplayName[..12]
+                : profile.DisplayName;
     }
 }
