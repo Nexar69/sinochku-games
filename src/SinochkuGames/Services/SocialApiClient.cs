@@ -67,6 +67,13 @@ public sealed class SocialApiClient : IDisposable
     public Task<SocialProfile> MeAsync(CancellationToken ct = default) =>
         GetAsync<SocialProfile>("/api/me", ct);
 
+    public Task ChangePasswordAsync(
+        string currentPassword,
+        string newPassword,
+        CancellationToken ct = default) =>
+        PostNoContentAsync("/api/me/change-password",
+            new { currentPassword, newPassword }, ct);
+
     public async Task<SocialProfile> UpdateProfileAsync(
         string displayName,
         string bio,
