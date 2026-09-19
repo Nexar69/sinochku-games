@@ -331,7 +331,7 @@ public sealed class FriendsChatForm : Form
         {
             if (InvokeRequired)
             {
-                BeginInvoke(() => OnMessage(message));
+                BeginInvoke((Action)(() => OnMessage(message)));
                 return;
             }
 
@@ -353,7 +353,7 @@ public sealed class FriendsChatForm : Form
         if (IsDisposed) return;
         if (InvokeRequired)
         {
-            BeginInvoke(() => OnPresence(friend));
+            BeginInvoke((Action)(() => OnPresence(friend)));
             return;
         }
 
@@ -373,7 +373,7 @@ public sealed class FriendsChatForm : Form
         if (IsDisposed) return;
         if (InvokeRequired)
         {
-            BeginInvoke(OnFriendsChanged);
+            BeginInvoke((Action)OnFriendsChanged);
             return;
         }
         try { await LoadPeopleAsync(); } catch { }
@@ -384,7 +384,7 @@ public sealed class FriendsChatForm : Form
         if (IsDisposed || _activeFriend?.Id != userId) return;
         if (InvokeRequired)
         {
-            BeginInvoke(() => OnTyping(userId, typing));
+            BeginInvoke((Action)(() => OnTyping(userId, typing)));
             return;
         }
 
