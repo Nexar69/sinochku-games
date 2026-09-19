@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.0.0-beta.3 — in development
+## v2.0.0 — 2026-09-19
 
 ### Platform
 - Modular .NET 8 launcher architecture.
@@ -41,3 +41,4 @@
 - SHA-256 update verification support.
 - One-click rollback to the previous launcher build.
 - Automated Windows CI and tests.
+- Final v2 bridge updater: Beta-channel users can migrate to v3 prereleases; Stable users only move to final v3 releases.
