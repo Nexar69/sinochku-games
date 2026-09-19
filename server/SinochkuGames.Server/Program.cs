@@ -75,6 +75,21 @@ builder.Services
                     context.Token = token;
 
                 return Task.CompletedTask;
+            },
+            OnTokenValidated = async context =>
+            {
+                var userId = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                var stamp = context.Principal?.FindFirst("sstamp")?.Value;
+                if (string.IsNullOrWhiteSpace(userId) || stamp is null)
+                {
+                    context.Fail("Invalid session.");
+                    return;
+                }
+
+                var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<AppUser>>();
+                var user = await userManager.FindByIdAsync(userId);
+                if (user is null || !string.Equals(user.SecurityStamp ?? "", stamp, StringComparison.Ordinal))
+                    context.Fail("Session has been revoked.");
             }
         };
     });
@@ -115,6 +130,8 @@ builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<SocialQueryService>();
 builder.Services.AddScoped<MediaStorageService>();
 builder.Services.AddScoped<RealtimeNotifier>();
+
+Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads"));
 
 var app = builder.Build();
 
