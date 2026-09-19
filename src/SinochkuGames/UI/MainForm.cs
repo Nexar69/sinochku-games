@@ -360,7 +360,7 @@ public sealed class MainForm : Form
         if (IsDisposed) return;
         if (InvokeRequired)
         {
-            BeginInvoke(() => OnNotificationReceived(notification));
+            BeginInvoke((Action)(() => OnNotificationReceived(notification)));
             return;
         }
 
@@ -375,7 +375,7 @@ public sealed class MainForm : Form
         if (IsDisposed) return;
         if (InvokeRequired)
         {
-            BeginInvoke(() => OnMessageReceived(message));
+            BeginInvoke((Action)(() => OnMessageReceived(message)));
             return;
         }
 
@@ -401,7 +401,7 @@ public sealed class MainForm : Form
         if (IsDisposed) return;
         if (InvokeRequired)
         {
-            BeginInvoke(() => OnFriendRequestReceived(_));
+            BeginInvoke((Action)(() => OnFriendRequestReceived(_)));
             return;
         }
         await RefreshSocialBadgesAsync();
@@ -412,7 +412,7 @@ public sealed class MainForm : Form
         if (IsDisposed) return;
         if (InvokeRequired)
         {
-            BeginInvoke(OnFriendsChanged);
+            BeginInvoke((Action)OnFriendsChanged);
             return;
         }
         await RefreshSocialBadgesAsync();
@@ -423,7 +423,7 @@ public sealed class MainForm : Form
         if (IsDisposed) return;
         if (InvokeRequired)
         {
-            BeginInvoke(() => OnCurrentUserChanged(profile));
+            BeginInvoke((Action)(() => OnCurrentUserChanged(profile)));
             return;
         }
 
