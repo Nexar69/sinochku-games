@@ -2,7 +2,7 @@
 
 A custom Steam-style Windows game launcher for the СИНОЧКУ meme universe.
 
-> v2 has been merged into `main` as the next-generation launcher code. v1.1 remains the stable public release until the v2 beta is packaged for testing.
+> **v2.0.0 is the stable public launcher.** It also contains the bridge updater needed to move Beta-channel users to v3 prereleases when they are published.
 
 ## Current games
 
@@ -10,7 +10,7 @@ A custom Steam-style Windows game launcher for the СИНОЧКУ meme universe.
 
 The v2 game registry is data-driven, so future СИНОЧКУ games can be added without hard-wiring new navigation pages.
 
-## v2 highlights
+## v2.0.0 highlights
 
 - Steam-style Library, Game, and Settings pages
 - Search, sorting, Favorites / Installed filters, and recently played ordering
@@ -22,6 +22,7 @@ The v2 game registry is data-driven, so future СИНОЧКУ games can be added
 - Per-user Steam custom artwork overrides with embedded fallback art
 - Appearance, Steam, Games, Updates, and About settings
 - Stable / Beta update channels
+- v2 → v3 migration bridge: Stable waits for final v3 releases; Beta may opt into v3 prereleases
 - Automatic and manual GitHub release checks
 - Release notes in update prompts
 - Updater backup/recovery and SHA-256 verification
