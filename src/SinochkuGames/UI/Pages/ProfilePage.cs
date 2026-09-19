@@ -172,7 +172,7 @@ public sealed class ProfilePage : UserControl
         var info = new Panel
         {
             Location = new Point(36, 334),
-            Size = new Size(650, 330),
+            Size = new Size(650, 390),
             BackColor = _theme.Surface
         };
         _body.Controls.Add(info);
@@ -188,10 +188,14 @@ public sealed class ProfilePage : UserControl
         var badgeText = profile.Badges.Count == 0 ? "No badges yet." : string.Join("   •   ", profile.Badges);
         AddText(info, badgeText, 242, 590);
 
+        AddTitle(info, "ACHIEVEMENTS", 286);
+        var unlocked = profile.Achievements.Where(x => x.Unlocked).Select(x => x.Name).ToArray();
+        AddText(info, unlocked.Length == 0 ? "No achievements yet." : string.Join("   •   ", unlocked), 323, 590);
+
         var showcases = new Panel
         {
             Location = new Point(708, 334),
-            Size = new Size(420, 330),
+            Size = new Size(420, 390),
             BackColor = _theme.Surface
         };
         _body.Controls.Add(showcases);
@@ -216,6 +220,114 @@ public sealed class ProfilePage : UserControl
                 showcases.Controls.Add(body);
                 y += 88;
             }
+        }
+
+        _ = BuildCommentsAsync(profile);
+    }
+
+    private async Task BuildCommentsAsync(SocialProfile profile)
+    {
+        try
+        {
+            var comments = await _context.Social.Api.ProfileCommentsAsync(profile.Username);
+            if (IsDisposed) return;
+
+            var panel = new Panel
+            {
+                Location = new Point(36, 748),
+                Size = new Size(1092, 340),
+                BackColor = _theme.Surface
+            };
+            _body.Controls.Add(panel);
+
+            AddTitle(panel, "PROFILE COMMENTS", 18);
+
+            var input = new TextBox
+            {
+                Location = new Point(20, 54),
+                Width = 780,
+                BackColor = _theme.SurfaceRaised,
+                ForeColor = _theme.Text,
+                PlaceholderText = "Leave a comment…"
+            };
+            panel.Controls.Add(input);
+
+            var post = _theme.Button("POST", 90, 30);
+            post.Location = new Point(812, 52);
+            post.Click += async (_, _) =>
+            {
+                var body = input.Text.Trim();
+                if (body.Length == 0) return;
+                try
+                {
+                    await _context.Social.Api.CreateProfileCommentAsync(profile.Username, body);
+                    await RefreshAsync();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, Program.Brand);
+                }
+            };
+            panel.Controls.Add(post);
+
+            var flow = new FlowLayoutPanel
+            {
+                Location = new Point(20, 96),
+                Size = new Size(1048, 220),
+                AutoScroll = true,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                BackColor = _theme.SurfaceRaised,
+                Padding = new Padding(6)
+            };
+            panel.Controls.Add(flow);
+
+            foreach (var comment in comments)
+            {
+                var row = new Panel
+                {
+                    Width = 1000,
+                    Height = 66,
+                    Margin = new Padding(3),
+                    BackColor = _theme.Surface
+                };
+
+                var author = _theme.Label(comment.Author.DisplayName, 9, FontStyle.Bold, _theme.Accent);
+                author.Location = new Point(10, 8);
+                row.Controls.Add(author);
+
+                var time = _theme.Label(comment.CreatedAtUtc.LocalDateTime.ToString("g"), 8, FontStyle.Regular, _theme.Muted);
+                time.Location = new Point(820, 8);
+                row.Controls.Add(time);
+
+                var text = _theme.Label(comment.Body, 9, FontStyle.Regular, _theme.Text);
+                text.Location = new Point(10, 32);
+                text.MaximumSize = new Size(900, 30);
+                row.Controls.Add(text);
+
+                if (comment.Author.Id == _context.Social.CurrentUser?.Id
+                    || profile.Id == _context.Social.CurrentUser?.Id)
+                {
+                    var delete = _theme.Button("×", 34, 28);
+                    delete.Location = new Point(952, 18);
+                    delete.Click += async (_, _) =>
+                    {
+                        try
+                        {
+                            await _context.Social.Api.DeleteProfileCommentAsync(comment.Id);
+                            await RefreshAsync();
+                        }
+                        catch { }
+                    };
+                    row.Controls.Add(delete);
+                }
+
+                flow.Controls.Add(row);
+            }
+        }
+        catch
+        {
+            // Privacy settings may intentionally hide comments.
         }
     }
 
