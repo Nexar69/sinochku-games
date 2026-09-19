@@ -75,3 +75,4 @@ public sealed record SocialPrivacy(
 
 public sealed record SocialAuthResponse(string AccessToken, SocialProfile User);
 public sealed record SocialInvite(string Code, int MaxUses, int Uses, DateTimeOffset CreatedAtUtc, DateTimeOffset? ExpiresAtUtc);
+public sealed record SocialRecoveryCodes(IReadOnlyList<string> Codes);
