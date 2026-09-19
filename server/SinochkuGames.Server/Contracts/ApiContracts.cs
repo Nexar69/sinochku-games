@@ -82,6 +82,9 @@ public sealed record CreateInviteRequest(int MaxUses = 1, int? ExpiresInHours = 
 public sealed record InviteDto(string Code, int MaxUses, int Uses, DateTimeOffset CreatedAtUtc, DateTimeOffset? ExpiresAtUtc);
 
 public sealed record ShowcaseDto(Guid Id, string Title, string Body, int SortOrder);
+public sealed record AchievementDto(string Id, string Name, string Description, bool Unlocked);
+public sealed record ProfileCommentDto(Guid Id, FriendDto Author, string Body, DateTimeOffset CreatedAtUtc);
+public sealed record CreateProfileCommentRequest(string Body);
 public sealed record SaveShowcasesRequest(IReadOnlyList<SaveShowcaseItem> Items);
 public sealed record SaveShowcaseItem(string Title, string Body, int SortOrder);
 
