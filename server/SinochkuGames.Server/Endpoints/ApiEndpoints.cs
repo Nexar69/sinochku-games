@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
@@ -34,12 +36,16 @@ public static class ApiEndpoints
         api.MapPost("/auth/login", LoginAsync)
             .RequireRateLimiting("auth");
 
+        api.MapPost("/auth/recover", RecoverAccountAsync)
+            .RequireRateLimiting("auth");
+
         var auth = api.MapGroup("")
             .RequireAuthorization();
 
         auth.MapGet("/me", MeAsync);
         auth.MapPut("/me/profile", UpdateProfileAsync);
         auth.MapPost("/me/change-password", ChangePasswordAsync);
+        auth.MapPost("/me/recovery-codes", GenerateRecoveryCodesAsync);
         auth.MapPost("/me/avatar", UploadAvatarAsync);
         auth.MapPost("/me/background", UploadBackgroundAsync);
         auth.MapGet("/me/privacy", PrivacyAsync);
@@ -163,6 +169,71 @@ public static class ApiEndpoints
         return user is null
             ? Results.Unauthorized()
             : Results.Ok(await BuildProfileAsync(user, db, ct));
+    }
+
+    private static async Task<IResult> RecoverAccountAsync(
+        RecoverAccountRequest request,
+        UserManager<AppUser> users,
+        SocialDbContext db,
+        CancellationToken ct)
+    {
+        var key = request.UsernameOrEmail.Trim();
+        var user = key.Contains('@')
+            ? await users.FindByEmailAsync(key)
+            : await users.FindByNameAsync(key);
+
+        if (user is null)
+            return Results.BadRequest(new { error = "Invalid recovery details." });
+
+        if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 8)
+            return Results.BadRequest(new { error = "New password must be at least 8 characters." });
+
+        var hash = RecoveryHash(request.RecoveryCode);
+        var code = await db.RecoveryCodes.SingleOrDefaultAsync(
+            x => x.UserId == user.Id && x.CodeHash == hash && x.UsedAtUtc == null,
+            ct);
+
+        if (code is null)
+            return Results.BadRequest(new { error = "Invalid recovery details." });
+
+        var token = await users.GeneratePasswordResetTokenAsync(user);
+        var reset = await users.ResetPasswordAsync(user, token, request.NewPassword);
+        if (!reset.Succeeded)
+            return Results.BadRequest(new { errors = reset.Errors.Select(x => x.Description).ToArray() });
+
+        var allCodes = await db.RecoveryCodes.Where(x => x.UserId == user.Id).ToListAsync(ct);
+        db.RecoveryCodes.RemoveRange(allCodes);
+        await db.SaveChangesAsync(ct);
+
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> GenerateRecoveryCodesAsync(
+        ClaimsPrincipal principal,
+        SocialDbContext db,
+        CancellationToken ct)
+    {
+        var me = UserId(principal);
+        if (me is null) return Results.Unauthorized();
+
+        var existing = await db.RecoveryCodes.Where(x => x.UserId == me).ToListAsync(ct);
+        db.RecoveryCodes.RemoveRange(existing);
+
+        var plain = new List<string>();
+        for (var i = 0; i < 6; i++)
+        {
+            var raw = Convert.ToHexString(RandomNumberGenerator.GetBytes(10)).ToLowerInvariant();
+            var formatted = string.Join("-", Enumerable.Range(0, 5).Select(x => raw.Substring(x * 4, 4)));
+            plain.Add(formatted);
+            db.RecoveryCodes.Add(new RecoveryCode
+            {
+                UserId = me,
+                CodeHash = RecoveryHash(formatted)
+            });
+        }
+
+        await db.SaveChangesAsync(ct);
+        return Results.Ok(new RecoveryCodesResponse(plain));
     }
 
     private static async Task<IResult> ChangePasswordAsync(
@@ -1146,6 +1217,12 @@ public static class ApiEndpoints
 
     private static string? UserId(ClaimsPrincipal principal) =>
         principal.FindFirstValue(ClaimTypes.NameIdentifier);
+
+    private static string RecoveryHash(string code)
+    {
+        var normalized = (code ?? "").Replace("-", "").Trim().ToUpperInvariant();
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(normalized)));
+    }
 
     private static string Clean(string? value, int max, string fallback = "")
     {
