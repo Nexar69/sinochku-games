@@ -81,6 +81,18 @@ public sealed class SocialApiClient : IDisposable
     public Task<SocialProfile> ProfileAsync(string username, CancellationToken ct = default) =>
         GetAsync<SocialProfile>($"/api/users/{Uri.EscapeDataString(username)}", ct);
 
+    public Task<SocialPrivacy> PrivacyAsync(CancellationToken ct = default) =>
+        GetAsync<SocialPrivacy>("/api/me/privacy", ct);
+
+    public Task<SocialPrivacy> UpdatePrivacyAsync(
+        string profileVisibility,
+        bool allowFriendRequests,
+        bool allowMessagesFromFriends,
+        bool showGameActivity,
+        CancellationToken ct = default) =>
+        PutAsync<SocialPrivacy>("/api/me/privacy",
+            new { profileVisibility, allowFriendRequests, allowMessagesFromFriends, showGameActivity }, ct);
+
     public Task<IReadOnlyList<SocialActivity>> ActivityAsync(string username, CancellationToken ct = default) =>
         GetAsync<IReadOnlyList<SocialActivity>>(
             $"/api/users/{Uri.EscapeDataString(username)}/activity", ct);
