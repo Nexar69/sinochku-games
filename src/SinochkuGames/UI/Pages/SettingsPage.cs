@@ -134,10 +134,20 @@ public sealed class SettingsPage : UserControl
             };
             page.Controls.Add(signOut);
 
+            var password = _theme.Button("CHANGE PASSWORD", 160, 40);
+            password.Location = new Point(534, 220);
+            password.Click += (_, _) =>
+            {
+                using var dialog = new SinochkuGames.UI.ChangePasswordForm(_context);
+                if (dialog.ShowDialog(this) == DialogResult.OK)
+                    MessageBox.Show("Password changed.", Program.Brand);
+            };
+            page.Controls.Add(password);
+
             if (_context.Social.CurrentUser?.IsFounder == true)
             {
                 var invite = _theme.Button("CREATE INVITE", 150, 40);
-                invite.Location = new Point(534, 220);
+                invite.Location = new Point(706, 220);
                 invite.Click += async (_, _) =>
                 {
                     try
