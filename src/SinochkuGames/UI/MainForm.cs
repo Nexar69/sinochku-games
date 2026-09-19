@@ -110,9 +110,9 @@ public sealed class MainForm : Form
 
             if (_context.Settings.SocialEnabled
                 && _context.Social.IsSignedIn
-                && !_context.Settings.StartFriendsChatMinimized)
+                && _context.Settings.OpenFriendsChatOnStart)
             {
-                // Keep chat opt-in from the button by default; this flag is reserved for later behavior.
+                await OpenChatAsync();
             }
         };
 
