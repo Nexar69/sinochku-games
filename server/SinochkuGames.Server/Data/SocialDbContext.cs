@@ -14,6 +14,7 @@ public sealed class SocialDbContext(DbContextOptions<SocialDbContext> options)
     public DbSet<InviteCode> InviteCodes => Set<InviteCode>();
     public DbSet<ProfileShowcase> ProfileShowcases => Set<ProfileShowcase>();
     public DbSet<ProfileComment> ProfileComments => Set<ProfileComment>();
+    public DbSet<RecoveryCode> RecoveryCodes => Set<RecoveryCode>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -43,5 +44,8 @@ public sealed class SocialDbContext(DbContextOptions<SocialDbContext> options)
 
         builder.Entity<ProfileComment>()
             .HasIndex(x => new { x.ProfileUserId, x.CreatedAtUtc });
+
+        builder.Entity<RecoveryCode>()
+            .HasIndex(x => new { x.UserId, x.CodeHash });
     }
 }
