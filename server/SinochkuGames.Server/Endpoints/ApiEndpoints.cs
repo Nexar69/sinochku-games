@@ -127,6 +127,7 @@ public static class ApiEndpoints
     private static async Task<IResult> LoginAsync(
         LoginRequest request,
         UserManager<AppUser> users,
+        SignInManager<AppUser> signIn,
         SocialDbContext db,
         JwtTokenService tokens,
         CancellationToken ct)
@@ -136,7 +137,13 @@ public static class ApiEndpoints
             ? await users.FindByEmailAsync(key)
             : await users.FindByNameAsync(key);
 
-        if (user is null || !await users.CheckPasswordAsync(user, request.Password))
+        if (user is null)
+            return Results.Unauthorized();
+
+        var result = await signIn.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: true);
+        if (result.IsLockedOut)
+            return Results.Json(new { error = "Account temporarily locked after too many failed sign-in attempts." }, statusCode: 423);
+        if (!result.Succeeded)
             return Results.Unauthorized();
 
         user.LastSeenAtUtc = DateTimeOffset.UtcNow;
