@@ -44,11 +44,9 @@ public sealed class UpdateService
             foreach (var release in document.RootElement.EnumerateArray())
             {
                 var prerelease = release.GetProperty("prerelease").GetBoolean();
-                if (_settings.UpdateChannel.Equals("Stable", StringComparison.OrdinalIgnoreCase) && prerelease)
-                    continue;
-
                 var tag = release.GetProperty("tag_name").GetString() ?? "";
-                if (!tag.StartsWith("v2.", StringComparison.OrdinalIgnoreCase))
+
+                if (!UpdatePolicy.IsEligibleRelease(tag, prerelease, _settings.UpdateChannel))
                     continue;
 
                 var version = tag.TrimStart('v', 'V');
