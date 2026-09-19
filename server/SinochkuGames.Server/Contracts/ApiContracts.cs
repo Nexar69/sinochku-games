@@ -2,6 +2,7 @@ namespace SinochkuGames.Server.Contracts;
 
 public sealed record RegisterRequest(string Username, string Email, string Password, string InviteCode, string? DisplayName);
 public sealed record LoginRequest(string UsernameOrEmail, string Password);
+public sealed record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 public sealed record AuthResponse(string AccessToken, UserProfileDto User);
 
 public sealed record UserProfileDto(
