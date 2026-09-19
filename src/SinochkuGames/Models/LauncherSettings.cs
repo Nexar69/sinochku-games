@@ -10,7 +10,7 @@ public sealed class LauncherSettings
     public string SteamEditPath { get; set; } = "";
     public string SocialServerUrl { get; set; } = "http://localhost:5187";
     public bool SocialEnabled { get; set; } = true;
-    public bool StartFriendsChatMinimized { get; set; } = false;
+    public bool OpenFriendsChatOnStart { get; set; } = false;
     public bool ShowSocialToasts { get; set; } = true;
     public HashSet<string> Favorites { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<string, DateTimeOffset> LastPlayed { get; set; } = new(StringComparer.OrdinalIgnoreCase);
