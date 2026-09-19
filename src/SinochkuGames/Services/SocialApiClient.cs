@@ -74,6 +74,17 @@ public sealed class SocialApiClient : IDisposable
         PostNoContentAsync("/api/me/change-password",
             new { currentPassword, newPassword }, ct);
 
+    public Task RecoverAccountAsync(
+        string usernameOrEmail,
+        string recoveryCode,
+        string newPassword,
+        CancellationToken ct = default) =>
+        PostNoContentAsync("/api/auth/recover",
+            new { usernameOrEmail, recoveryCode, newPassword }, ct);
+
+    public Task<SocialRecoveryCodes> GenerateRecoveryCodesAsync(CancellationToken ct = default) =>
+        PostAsync<SocialRecoveryCodes>("/api/me/recovery-codes", new { }, ct);
+
     public async Task<SocialProfile> UpdateProfileAsync(
         string displayName,
         string bio,
