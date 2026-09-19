@@ -14,6 +14,7 @@ public sealed class SettingsPage : UserControl
     private readonly TextBox _steamEdit = new();
 
     public event EventHandler? LibraryRequested;
+    public event EventHandler? SocialLoginRequested;
 
     public SettingsPage(LauncherContext context, ThemePalette theme)
     {
@@ -39,11 +40,263 @@ public sealed class SettingsPage : UserControl
         Resize += (_, _) => tabs.Size = new Size(Math.Max(600, Width - 60), Math.Max(420, Height - 150));
         Controls.Add(tabs);
 
+        tabs.TabPages.Add(BuildAccount());
+        tabs.TabPages.Add(BuildFriendsPrivacy());
+        tabs.TabPages.Add(BuildNotifications());
         tabs.TabPages.Add(BuildAppearance());
         tabs.TabPages.Add(BuildUpdates());
         tabs.TabPages.Add(BuildSteam());
         tabs.TabPages.Add(BuildGames());
         tabs.TabPages.Add(BuildAbout());
+    }
+
+
+    private TabPage BuildAccount()
+    {
+        var page = Page("Account");
+
+        var heading = _theme.Label("СИНОЧКУ ACCOUNT", 13, FontStyle.Bold);
+        heading.Location = new Point(28, 28);
+        page.Controls.Add(heading);
+
+        var signedIn = _theme.Label(
+            _context.Social.IsSignedIn
+                ? $"Signed in as {_context.Social.CurrentUser?.DisplayName} (@{_context.Social.CurrentUser?.Username})"
+                : "Not signed in",
+            10,
+            FontStyle.Regular,
+            _context.Social.IsSignedIn ? _theme.Accent : _theme.Muted);
+        signedIn.Location = new Point(28, 66);
+        page.Controls.Add(signedIn);
+
+        AddLabel(page, "Social server", 28, 120);
+        var server = new TextBox
+        {
+            Location = new Point(180, 116),
+            Width = 470,
+            Text = _context.Settings.SocialServerUrl,
+            BackColor = _theme.SurfaceRaised,
+            ForeColor = _theme.Text
+        };
+        page.Controls.Add(server);
+
+        var test = _theme.Button("TEST", 90, 32);
+        test.Location = new Point(662, 114);
+        test.Click += async (_, _) =>
+        {
+            _context.Social.SetServerUrl(server.Text);
+            test.Text = "TESTING...";
+            test.Enabled = false;
+            var ok = await _context.Social.Api.HealthAsync();
+            test.Text = ok ? "ONLINE ✓" : "OFFLINE";
+            test.ForeColor = ok ? _theme.Accent : Color.FromArgb(255, 177, 80);
+            test.Enabled = true;
+        };
+        page.Controls.Add(test);
+
+        var enabled = new CheckBox
+        {
+            Text = "Enable profiles, friends and chat",
+            Checked = _context.Settings.SocialEnabled,
+            Location = new Point(28, 174),
+            AutoSize = true,
+            ForeColor = _theme.Text,
+            BackColor = Color.Transparent
+        };
+        page.Controls.Add(enabled);
+
+        var save = _theme.Button("SAVE ACCOUNT SETTINGS", 200, 40);
+        save.Location = new Point(28, 220);
+        save.Click += (_, _) =>
+        {
+            _context.Settings.SocialEnabled = enabled.Checked;
+            _context.Social.SetServerUrl(server.Text);
+            _context.SettingsStore.Save(_context.Settings);
+            MessageBox.Show("Account settings saved.", Program.Brand);
+        };
+        page.Controls.Add(save);
+
+        if (_context.Social.IsSignedIn)
+        {
+            var profile = _theme.Button("REFRESH PROFILE", 150, 40);
+            profile.Location = new Point(240, 220);
+            profile.Click += async (_, _) => await _context.Social.RefreshMeAsync();
+            page.Controls.Add(profile);
+
+            var signOut = _theme.Button("SIGN OUT", 120, 40);
+            signOut.Location = new Point(402, 220);
+            signOut.Click += async (_, _) =>
+            {
+                await _context.Social.SignOutAsync();
+                signedIn.Text = "Not signed in";
+                signedIn.ForeColor = _theme.Muted;
+                MessageBox.Show("Signed out.", Program.Brand);
+            };
+            page.Controls.Add(signOut);
+
+            if (_context.Social.CurrentUser?.IsFounder == true)
+            {
+                var invite = _theme.Button("CREATE INVITE", 150, 40);
+                invite.Location = new Point(534, 220);
+                invite.Click += async (_, _) =>
+                {
+                    try
+                    {
+                        var code = await _context.Social.Api.CreateInviteAsync(1, 24 * 14);
+                        Clipboard.SetText(code.Code);
+                        MessageBox.Show($"Invite copied:\n\n{code.Code}", Program.Brand);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, Program.Brand);
+                    }
+                };
+                page.Controls.Add(invite);
+            }
+        }
+        else
+        {
+            var signIn = _theme.Button("SIGN IN / CREATE ACCOUNT", 220, 40);
+            signIn.Location = new Point(240, 220);
+            signIn.Click += (_, _) => SocialLoginRequested?.Invoke(this, EventArgs.Empty);
+            page.Controls.Add(signIn);
+        }
+
+        var note = _theme.Label(
+            "СИНОЧКУ accounts are separate from Steam. Never use your Steam password here.",
+            9,
+            FontStyle.Regular,
+            _theme.Muted);
+        note.Location = new Point(28, 292);
+        page.Controls.Add(note);
+
+        return page;
+    }
+
+    private TabPage BuildFriendsPrivacy()
+    {
+        var page = Page("Friends & Privacy");
+
+        var heading = _theme.Label("FRIENDS & PRIVACY", 13, FontStyle.Bold);
+        heading.Location = new Point(28, 28);
+        page.Controls.Add(heading);
+
+        if (!_context.Social.IsSignedIn)
+        {
+            var note = _theme.Label("Sign in to manage account privacy.", 10, FontStyle.Regular, _theme.Muted);
+            note.Location = new Point(28, 72);
+            page.Controls.Add(note);
+            return page;
+        }
+
+        AddLabel(page, "Profile visibility", 28, 82);
+        var visibility = new ComboBox
+        {
+            Location = new Point(190, 78),
+            Width = 160,
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            BackColor = _theme.SurfaceRaised,
+            ForeColor = _theme.Text
+        };
+        visibility.Items.AddRange(new object[] { "Public", "Friends", "Private" });
+        page.Controls.Add(visibility);
+
+        var friendRequests = PrivacyCheck(page, "Allow friend requests", 28, 134);
+        var messages = PrivacyCheck(page, "Allow messages from friends", 28, 174);
+        var activity = PrivacyCheck(page, "Show game activity to friends", 28, 214);
+
+        var save = _theme.Button("SAVE PRIVACY", 150, 40);
+        save.Location = new Point(28, 274);
+        save.Click += async (_, _) =>
+        {
+            try
+            {
+                await _context.Social.Api.UpdatePrivacyAsync(
+                    visibility.SelectedItem?.ToString() ?? "Friends",
+                    friendRequests.Checked,
+                    messages.Checked,
+                    activity.Checked);
+                MessageBox.Show("Privacy settings saved.", Program.Brand);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, Program.Brand);
+            }
+        };
+        page.Controls.Add(save);
+
+        page.Enter += async (_, _) =>
+        {
+            try
+            {
+                var privacy = await _context.Social.Api.PrivacyAsync();
+                visibility.SelectedItem = privacy.ProfileVisibility;
+                friendRequests.Checked = privacy.AllowFriendRequests;
+                messages.Checked = privacy.AllowMessagesFromFriends;
+                activity.Checked = privacy.ShowGameActivity;
+            }
+            catch { }
+        };
+
+        return page;
+    }
+
+    private TabPage BuildNotifications()
+    {
+        var page = Page("Notifications");
+
+        var heading = _theme.Label("NOTIFICATIONS", 13, FontStyle.Bold);
+        heading.Location = new Point(28, 28);
+        page.Controls.Add(heading);
+
+        var toasts = new CheckBox
+        {
+            Text = "Show desktop-style social toasts",
+            Checked = _context.Settings.ShowSocialToasts,
+            Location = new Point(28, 82),
+            AutoSize = true,
+            ForeColor = _theme.Text,
+            BackColor = Color.Transparent
+        };
+        page.Controls.Add(toasts);
+
+        var chatBehavior = new CheckBox
+        {
+            Text = "Open Friends & Chat automatically on launcher start",
+            Checked = _context.Settings.StartFriendsChatMinimized,
+            Location = new Point(28, 126),
+            AutoSize = true,
+            ForeColor = _theme.Text,
+            BackColor = Color.Transparent
+        };
+        page.Controls.Add(chatBehavior);
+
+        var save = _theme.Button("SAVE NOTIFICATIONS", 180, 40);
+        save.Location = new Point(28, 182);
+        save.Click += (_, _) =>
+        {
+            _context.Settings.ShowSocialToasts = toasts.Checked;
+            _context.Settings.StartFriendsChatMinimized = chatBehavior.Checked;
+            _context.SettingsStore.Save(_context.Settings);
+            MessageBox.Show("Notification settings saved.", Program.Brand);
+        };
+        page.Controls.Add(save);
+
+        return page;
+    }
+
+    private CheckBox PrivacyCheck(Control parent, string text, int x, int y)
+    {
+        var check = new CheckBox
+        {
+            Text = text,
+            Location = new Point(x, y),
+            AutoSize = true,
+            ForeColor = _theme.Text,
+            BackColor = Color.Transparent
+        };
+        parent.Controls.Add(check);
+        return check;
     }
 
     private TabPage BuildAppearance()
