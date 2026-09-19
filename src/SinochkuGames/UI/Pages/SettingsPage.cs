@@ -172,12 +172,43 @@ public sealed class SettingsPage : UserControl
             page.Controls.Add(signIn);
         }
 
+        if (_context.Social.IsSignedIn)
+        {
+            var recovery = _theme.Button("GENERATE RECOVERY CODES", 220, 40);
+            recovery.Location = new Point(28, 284);
+            recovery.Click += async (_, _) =>
+            {
+                var answer = MessageBox.Show(
+                    "Generate new recovery codes? Any older recovery codes will stop working.",
+                    Program.Brand,
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+                if (answer != DialogResult.Yes) return;
+
+                try
+                {
+                    var result = await _context.Social.Api.GenerateRecoveryCodesAsync();
+                    var text = string.Join(Environment.NewLine, result.Codes);
+                    Clipboard.SetText(text);
+                    MessageBox.Show(
+                        "Six one-time recovery codes were copied to your clipboard.\n\n" +
+                        "Store them somewhere private. They are only shown this time.",
+                        Program.Brand);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, Program.Brand);
+                }
+            };
+            page.Controls.Add(recovery);
+        }
+
         var note = _theme.Label(
             "СИНОЧКУ accounts are separate from Steam. Never use your Steam password here.",
             9,
             FontStyle.Regular,
             _theme.Muted);
-        note.Location = new Point(28, 292);
+        note.Location = new Point(28, 342);
         page.Controls.Add(note);
 
         return page;
