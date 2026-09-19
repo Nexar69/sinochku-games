@@ -15,6 +15,10 @@ public sealed class AppUser : IdentityUser
     public DateTimeOffset LastSeenAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
     public bool IsFounder { get; set; }
+    public string ProfileVisibility { get; set; } = "Friends";
+    public bool AllowFriendRequests { get; set; } = true;
+    public bool AllowMessagesFromFriends { get; set; } = true;
+    public bool ShowGameActivity { get; set; } = true;
 }
 
 public sealed class Friendship
