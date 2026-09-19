@@ -39,6 +39,7 @@ public static class ApiEndpoints
 
         auth.MapGet("/me", MeAsync);
         auth.MapPut("/me/profile", UpdateProfileAsync);
+        auth.MapPost("/me/change-password", ChangePasswordAsync);
         auth.MapPost("/me/avatar", UploadAvatarAsync);
         auth.MapPost("/me/background", UploadBackgroundAsync);
         auth.MapGet("/me/privacy", PrivacyAsync);
@@ -155,6 +156,30 @@ public static class ApiEndpoints
         return user is null
             ? Results.Unauthorized()
             : Results.Ok(await BuildProfileAsync(user, db, ct));
+    }
+
+    private static async Task<IResult> ChangePasswordAsync(
+        ChangePasswordRequest request,
+        ClaimsPrincipal principal,
+        SocialDbContext db,
+        UserManager<AppUser> users,
+        CancellationToken ct)
+    {
+        var user = await CurrentUserAsync(principal, db, ct);
+        if (user is null) return Results.Unauthorized();
+
+        if (string.IsNullOrWhiteSpace(request.NewPassword) || request.NewPassword.Length < 8)
+            return Results.BadRequest(new { error = "New password must be at least 8 characters." });
+
+        var result = await users.ChangePasswordAsync(
+            user,
+            request.CurrentPassword,
+            request.NewPassword);
+
+        if (!result.Succeeded)
+            return Results.BadRequest(new { errors = result.Errors.Select(x => x.Description).ToArray() });
+
+        return Results.Ok();
     }
 
     private static async Task<IResult> UpdateProfileAsync(
