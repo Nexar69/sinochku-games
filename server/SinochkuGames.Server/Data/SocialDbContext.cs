@@ -13,6 +13,7 @@ public sealed class SocialDbContext(DbContextOptions<SocialDbContext> options)
     public DbSet<GameSession> GameSessions => Set<GameSession>();
     public DbSet<InviteCode> InviteCodes => Set<InviteCode>();
     public DbSet<ProfileShowcase> ProfileShowcases => Set<ProfileShowcase>();
+    public DbSet<ProfileComment> ProfileComments => Set<ProfileComment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -39,5 +40,8 @@ public sealed class SocialDbContext(DbContextOptions<SocialDbContext> options)
 
         builder.Entity<ProfileShowcase>()
             .HasIndex(x => new { x.UserId, x.SortOrder });
+
+        builder.Entity<ProfileComment>()
+            .HasIndex(x => new { x.ProfileUserId, x.CreatedAtUtc });
     }
 }
