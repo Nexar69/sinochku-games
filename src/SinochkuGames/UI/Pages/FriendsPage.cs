@@ -312,7 +312,7 @@ public sealed class FriendsPage : UserControl
         if (IsDisposed) return;
         if (InvokeRequired)
         {
-            BeginInvoke(async () => await RefreshAsync());
+            BeginInvoke((Action)(async () => await RefreshAsync()));
             return;
         }
         await RefreshAsync();
