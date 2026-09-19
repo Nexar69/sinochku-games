@@ -22,7 +22,8 @@ public sealed class JwtTokenService(IConfiguration configuration)
             new Claim(JwtRegisteredClaimNames.Sub, user.Id),
             new Claim(ClaimTypes.NameIdentifier, user.Id),
             new Claim(ClaimTypes.Name, user.UserName ?? ""),
-            new Claim("founder", user.IsFounder ? "true" : "false")
+            new Claim("founder", user.IsFounder ? "true" : "false"),
+            new Claim("sstamp", user.SecurityStamp ?? "")
         };
 
         var token = new JwtSecurityToken(
