@@ -9,7 +9,7 @@
 - Avatars, profile backgrounds, bio, status and accent color.
 - Public / Friends / Private profile visibility.
 - Friend request, messaging and activity privacy settings.
-- Password changes.
+- Password changes and one-time recovery codes.
 - Profile badges, achievements, showcases and comments.
 
 ### Friends and chat
