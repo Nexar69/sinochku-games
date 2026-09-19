@@ -123,19 +123,29 @@ public sealed class FriendsPage : UserControl
     {
         var row = BaseRow(510, 68);
 
-        var dot = _theme.Label("●", 11, FontStyle.Bold, PresenceColor(friend));
-        dot.Location = new Point(10, 21);
+        var avatar = new PictureBox
+        {
+            Location = new Point(8, 10),
+            Size = new Size(44, 44),
+            SizeMode = PictureBoxSizeMode.Zoom,
+            BackColor = _theme.Surface
+        };
+        row.Controls.Add(avatar);
+        _ = LoadAvatarAsync(avatar, friend.AvatarUrl);
+
+        var dot = _theme.Label("●", 10, FontStyle.Bold, PresenceColor(friend));
+        dot.Location = new Point(48, 38);
         row.Controls.Add(dot);
 
         var name = _theme.Label(friend.DisplayName, 10, FontStyle.Bold);
-        name.Location = new Point(36, 10);
+        name.Location = new Point(64, 10);
         row.Controls.Add(name);
 
         var stateText = friend.Presence == "Playing" && !string.IsNullOrWhiteSpace(friend.CurrentGameId)
             ? $"Playing {friend.CurrentGameId}"
             : friend.Presence;
         var state = _theme.Label(stateText, 8, FontStyle.Regular, _theme.Muted);
-        state.Location = new Point(38, 36);
+        state.Location = new Point(66, 36);
         row.Controls.Add(state);
 
         var profile = _theme.Button("PROFILE", 76, 30);
@@ -155,12 +165,22 @@ public sealed class FriendsPage : UserControl
     {
         var row = BaseRow(470, 74);
 
+        var avatar = new PictureBox
+        {
+            Location = new Point(8, 14),
+            Size = new Size(42, 42),
+            SizeMode = PictureBoxSizeMode.Zoom,
+            BackColor = _theme.Surface
+        };
+        row.Controls.Add(avatar);
+        _ = LoadAvatarAsync(avatar, request.Sender.AvatarUrl);
+
         var name = _theme.Label(request.Sender.DisplayName, 10, FontStyle.Bold);
-        name.Location = new Point(12, 10);
+        name.Location = new Point(62, 10);
         row.Controls.Add(name);
 
         var user = _theme.Label($"@{request.Sender.Username}", 8, FontStyle.Regular, _theme.Muted);
-        user.Location = new Point(14, 35);
+        user.Location = new Point(64, 35);
         row.Controls.Add(user);
 
         var accept = _theme.Button("ACCEPT", 80, 30);
@@ -203,12 +223,22 @@ public sealed class FriendsPage : UserControl
     {
         var row = BaseRow(470, 66);
 
+        var avatar = new PictureBox
+        {
+            Location = new Point(8, 11),
+            Size = new Size(42, 42),
+            SizeMode = PictureBoxSizeMode.Zoom,
+            BackColor = _theme.Surface
+        };
+        row.Controls.Add(avatar);
+        _ = LoadAvatarAsync(avatar, user.AvatarUrl);
+
         var name = _theme.Label(user.DisplayName, 10, FontStyle.Bold);
-        name.Location = new Point(12, 9);
+        name.Location = new Point(62, 9);
         row.Controls.Add(name);
 
         var username = _theme.Label($"@{user.Username}", 8, FontStyle.Regular, _theme.Muted);
-        username.Location = new Point(14, 34);
+        username.Location = new Point(64, 34);
         row.Controls.Add(username);
 
         var profile = _theme.Button("PROFILE", 80, 30);
@@ -234,6 +264,14 @@ public sealed class FriendsPage : UserControl
         row.Controls.Add(add);
 
         return row;
+    }
+
+    private async Task LoadAvatarAsync(PictureBox box, string url)
+    {
+        var image = await _context.Social.Api.DownloadImageAsync(url);
+        if (IsDisposed || box.IsDisposed || image is null) return;
+        box.Image?.Dispose();
+        box.Image = image;
     }
 
     private Panel BaseRow(int width, int height) => new()
