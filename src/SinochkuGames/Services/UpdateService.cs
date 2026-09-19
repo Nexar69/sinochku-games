@@ -48,7 +48,7 @@ public sealed class UpdateService
                     continue;
 
                 var tag = release.GetProperty("tag_name").GetString() ?? "";
-                if (!tag.StartsWith("v2.", StringComparison.OrdinalIgnoreCase))
+                if (!tag.StartsWith("v3.", StringComparison.OrdinalIgnoreCase))
                     continue;
 
                 var version = tag.TrimStart('v', 'V');
