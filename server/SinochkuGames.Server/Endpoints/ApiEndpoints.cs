@@ -41,6 +41,8 @@ public static class ApiEndpoints
         auth.MapPut("/me/profile", UpdateProfileAsync);
         auth.MapPost("/me/avatar", UploadAvatarAsync);
         auth.MapPost("/me/background", UploadBackgroundAsync);
+        auth.MapGet("/me/privacy", PrivacyAsync);
+        auth.MapPut("/me/privacy", UpdatePrivacyAsync);
         auth.MapGet("/me/showcases", MyShowcasesAsync);
         auth.MapPut("/me/showcases", SaveShowcasesAsync);
 
@@ -231,6 +233,47 @@ public static class ApiEndpoints
         }
     }
 
+    private static async Task<IResult> PrivacyAsync(
+        ClaimsPrincipal principal,
+        SocialDbContext db,
+        CancellationToken ct)
+    {
+        var user = await CurrentUserAsync(principal, db, ct);
+        if (user is null) return Results.Unauthorized();
+
+        return Results.Ok(new PrivacySettingsDto(
+            user.ProfileVisibility,
+            user.AllowFriendRequests,
+            user.AllowMessagesFromFriends,
+            user.ShowGameActivity));
+    }
+
+    private static async Task<IResult> UpdatePrivacyAsync(
+        UpdatePrivacySettingsRequest request,
+        ClaimsPrincipal principal,
+        SocialDbContext db,
+        CancellationToken ct)
+    {
+        var user = await CurrentUserAsync(principal, db, ct);
+        if (user is null) return Results.Unauthorized();
+
+        var visibility = request.ProfileVisibility.Trim();
+        if (visibility is not ("Public" or "Friends" or "Private"))
+            return Results.BadRequest(new { error = "Profile visibility must be Public, Friends, or Private." });
+
+        user.ProfileVisibility = visibility;
+        user.AllowFriendRequests = request.AllowFriendRequests;
+        user.AllowMessagesFromFriends = request.AllowMessagesFromFriends;
+        user.ShowGameActivity = request.ShowGameActivity;
+        await db.SaveChangesAsync(ct);
+
+        return Results.Ok(new PrivacySettingsDto(
+            user.ProfileVisibility,
+            user.AllowFriendRequests,
+            user.AllowMessagesFromFriends,
+            user.ShowGameActivity));
+    }
+
     private static async Task<IResult> SearchUsersAsync(
         string? q,
         ClaimsPrincipal principal,
@@ -259,31 +302,47 @@ public static class ApiEndpoints
         string username,
         ClaimsPrincipal principal,
         SocialDbContext db,
+        SocialQueryService social,
         CancellationToken ct)
     {
-        if (UserId(principal) is null) return Results.Unauthorized();
+        var me = UserId(principal);
+        if (me is null) return Results.Unauthorized();
 
         var user = await db.Users.SingleOrDefaultAsync(
             u => u.NormalizedUserName == username.ToUpper(),
             ct);
 
-        return user is null
-            ? Results.NotFound()
-            : Results.Ok(await BuildProfileAsync(user, db, ct));
+        if (user is null) return Results.NotFound();
+
+        if (user.Id != me)
+        {
+            var friends = await social.AreFriendsAsync(me, user.Id, ct);
+            if (user.ProfileVisibility == "Private"
+                || user.ProfileVisibility == "Friends" && !friends)
+                return Results.Forbid();
+        }
+
+        return Results.Ok(await BuildProfileAsync(user, db, ct));
     }
 
     private static async Task<IResult> UserActivityAsync(
         string username,
         ClaimsPrincipal principal,
         SocialDbContext db,
+        SocialQueryService social,
         CancellationToken ct)
     {
-        if (UserId(principal) is null) return Results.Unauthorized();
+        var me = UserId(principal);
+        if (me is null) return Results.Unauthorized();
 
         var user = await db.Users.SingleOrDefaultAsync(
             u => u.NormalizedUserName == username.ToUpper(),
             ct);
         if (user is null) return Results.NotFound();
+
+        if (user.Id != me
+            && (!user.ShowGameActivity || !await social.AreFriendsAsync(me, user.Id, ct)))
+            return Results.Forbid();
 
         var sessions = await db.GameSessions
             .AsNoTracking()
@@ -366,6 +425,8 @@ public static class ApiEndpoints
 
         if (target is null) return Results.NotFound(new { error = "User not found." });
         if (target.Id == meId) return Results.BadRequest(new { error = "You cannot add yourself." });
+        if (!target.AllowFriendRequests)
+            return Results.BadRequest(new { error = "This user is not accepting friend requests." });
         if (await social.AreFriendsAsync(meId, target.Id, ct))
             return Results.BadRequest(new { error = "You are already friends." });
 
@@ -594,6 +655,8 @@ public static class ApiEndpoints
         if (friend is null) return Results.NotFound();
         if (!await social.AreFriendsAsync(me, friend.Id, ct))
             return Results.Forbid();
+        if (!friend.AllowMessagesFromFriends)
+            return Results.BadRequest(new { error = "This friend is not accepting messages." });
 
         var entity = new DirectMessage
         {
