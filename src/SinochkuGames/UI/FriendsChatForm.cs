@@ -198,24 +198,34 @@ public sealed class FriendsChatForm : Form
             Cursor = Cursors.Hand
         };
 
+        var avatar = new PictureBox
+        {
+            Location = new Point(8, 9),
+            Size = new Size(42, 42),
+            SizeMode = PictureBoxSizeMode.Zoom,
+            BackColor = _theme.Surface
+        };
+        row.Controls.Add(avatar);
+        _ = LoadAvatarAsync(avatar, friend.AvatarUrl);
+
         var dotColor = friend.Presence == "Playing" ? _theme.Play
             : friend.Presence == "Online" ? _theme.Accent
             : friend.Presence == "Away" ? Color.Goldenrod
             : _theme.Muted;
 
-        var dot = _theme.Label("●", 10, FontStyle.Bold, dotColor);
-        dot.Location = new Point(10, 20);
+        var dot = _theme.Label("●", 9, FontStyle.Bold, dotColor);
+        dot.Location = new Point(44, 38);
         row.Controls.Add(dot);
 
         var name = _theme.Label(friend.DisplayName, 9, unread > 0 ? FontStyle.Bold : FontStyle.Regular);
-        name.Location = new Point(34, 10);
+        name.Location = new Point(60, 10);
         row.Controls.Add(name);
 
         var statusText = friend.Presence == "Playing" && !string.IsNullOrWhiteSpace(friend.CurrentGameId)
             ? $"Playing {friend.CurrentGameId}"
             : friend.Presence;
         var status = _theme.Label(statusText, 8, FontStyle.Regular, _theme.Muted);
-        status.Location = new Point(36, 34);
+        status.Location = new Point(62, 34);
         row.Controls.Add(status);
 
         if (unread > 0)
@@ -232,6 +242,14 @@ public sealed class FriendsChatForm : Form
         name.Click += open;
         status.Click += open;
         return row;
+    }
+
+    private async Task LoadAvatarAsync(PictureBox box, string url)
+    {
+        var image = await _context.Social.Api.DownloadImageAsync(url);
+        if (IsDisposed || box.IsDisposed || image is null) return;
+        box.Image?.Dispose();
+        box.Image = image;
     }
 
     private async Task OpenConversationAsync(SocialFriend friend)
