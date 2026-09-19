@@ -97,6 +97,23 @@ public sealed class SocialApiClient : IDisposable
         GetAsync<IReadOnlyList<SocialActivity>>(
             $"/api/users/{Uri.EscapeDataString(username)}/activity", ct);
 
+    public Task<IReadOnlyList<SocialProfileComment>> ProfileCommentsAsync(
+        string username,
+        CancellationToken ct = default) =>
+        GetAsync<IReadOnlyList<SocialProfileComment>>(
+            $"/api/users/{Uri.EscapeDataString(username)}/comments", ct);
+
+    public Task<SocialProfileComment> CreateProfileCommentAsync(
+        string username,
+        string body,
+        CancellationToken ct = default) =>
+        PostAsync<SocialProfileComment>(
+            $"/api/users/{Uri.EscapeDataString(username)}/comments",
+            new { body }, ct);
+
+    public Task DeleteProfileCommentAsync(Guid id, CancellationToken ct = default) =>
+        DeleteAsync($"/api/profile-comments/{id}", ct);
+
     public Task<IReadOnlyList<SocialFriend>> SearchUsersAsync(string query, CancellationToken ct = default) =>
         GetAsync<IReadOnlyList<SocialFriend>>(
             $"/api/users/search?q={Uri.EscapeDataString(query)}", ct);
