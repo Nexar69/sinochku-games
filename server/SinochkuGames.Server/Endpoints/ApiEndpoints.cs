@@ -49,6 +49,9 @@ public static class ApiEndpoints
         auth.MapGet("/users/search", SearchUsersAsync);
         auth.MapGet("/users/{username}", UserProfileAsync);
         auth.MapGet("/users/{username}/activity", UserActivityAsync);
+        auth.MapGet("/users/{username}/comments", ProfileCommentsAsync);
+        auth.MapPost("/users/{username}/comments", CreateProfileCommentAsync);
+        auth.MapDelete("/profile-comments/{id:guid}", DeleteProfileCommentAsync);
 
         auth.MapGet("/friends", FriendsAsync);
         auth.MapGet("/friends/requests", FriendRequestsAsync);
@@ -362,6 +365,129 @@ public static class ApiEndpoints
         }).ToArray();
 
         return Results.Ok(items);
+    }
+
+    private static async Task<IResult> ProfileCommentsAsync(
+        string username,
+        ClaimsPrincipal principal,
+        SocialDbContext db,
+        SocialQueryService social,
+        CancellationToken ct)
+    {
+        var me = UserId(principal);
+        if (me is null) return Results.Unauthorized();
+
+        var profile = await db.Users.SingleOrDefaultAsync(
+            u => u.NormalizedUserName == username.ToUpper(),
+            ct);
+        if (profile is null) return Results.NotFound();
+
+        if (profile.Id != me)
+        {
+            var friends = await social.AreFriendsAsync(me, profile.Id, ct);
+            if (profile.ProfileVisibility == "Private"
+                || profile.ProfileVisibility == "Friends" && !friends)
+                return Results.Forbid();
+        }
+
+        var comments = await db.ProfileComments.AsNoTracking()
+            .Where(x => x.ProfileUserId == profile.Id)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(50)
+            .ToListAsync(ct);
+
+        var authorIds = comments.Select(x => x.AuthorUserId).Distinct().ToArray();
+        var authors = await db.Users.AsNoTracking()
+            .Where(x => authorIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, ct);
+
+        return Results.Ok(comments
+            .Where(x => authors.ContainsKey(x.AuthorUserId))
+            .Select(x => new ProfileCommentDto(
+                x.Id,
+                SocialQueryService.ToFriend(authors[x.AuthorUserId]),
+                x.Body,
+                x.CreatedAtUtc)));
+    }
+
+    private static async Task<IResult> CreateProfileCommentAsync(
+        string username,
+        CreateProfileCommentRequest request,
+        ClaimsPrincipal principal,
+        SocialDbContext db,
+        SocialQueryService social,
+        RealtimeNotifier realtime,
+        CancellationToken ct)
+    {
+        var me = UserId(principal);
+        if (me is null) return Results.Unauthorized();
+
+        var profile = await db.Users.SingleOrDefaultAsync(
+            u => u.NormalizedUserName == username.ToUpper(),
+            ct);
+        if (profile is null) return Results.NotFound();
+
+        if (profile.Id != me && !await social.AreFriendsAsync(me, profile.Id, ct))
+            return Results.Forbid();
+
+        var body = Clean(request.Body, 500);
+        if (string.IsNullOrWhiteSpace(body))
+            return Results.BadRequest(new { error = "Comment cannot be empty." });
+
+        var author = await db.Users.FindAsync(new object[] { me }, ct);
+        if (author is null) return Results.Unauthorized();
+
+        var comment = new ProfileComment
+        {
+            ProfileUserId = profile.Id,
+            AuthorUserId = me,
+            Body = body
+        };
+        db.ProfileComments.Add(comment);
+
+        if (profile.Id != me)
+        {
+            var notification = new NotificationEntity
+            {
+                UserId = profile.Id,
+                Type = "profile_comment",
+                ActorUserId = me,
+                Text = $"{author.DisplayName} commented on your profile."
+            };
+            db.Notifications.Add(notification);
+            await db.SaveChangesAsync(ct);
+            await realtime.NotificationAsync(profile.Id, ToNotificationDto(notification));
+        }
+        else
+        {
+            await db.SaveChangesAsync(ct);
+        }
+
+        return Results.Ok(new ProfileCommentDto(
+            comment.Id,
+            SocialQueryService.ToFriend(author),
+            comment.Body,
+            comment.CreatedAtUtc));
+    }
+
+    private static async Task<IResult> DeleteProfileCommentAsync(
+        Guid id,
+        ClaimsPrincipal principal,
+        SocialDbContext db,
+        CancellationToken ct)
+    {
+        var me = UserId(principal);
+        if (me is null) return Results.Unauthorized();
+
+        var comment = await db.ProfileComments.FindAsync(new object[] { id }, ct);
+        if (comment is null) return Results.NotFound();
+
+        if (comment.AuthorUserId != me && comment.ProfileUserId != me)
+            return Results.Forbid();
+
+        db.ProfileComments.Remove(comment);
+        await db.SaveChangesAsync(ct);
+        return Results.NoContent();
     }
 
     private static async Task<IResult> FriendsAsync(
@@ -814,8 +940,33 @@ public static class ApiEndpoints
         await db.SaveChangesAsync(ct);
 
         var dto = SocialQueryService.ToFriend(user);
-        foreach (var friendId in await social.FriendIdsAsync(me, ct))
+        var friendIds = await social.FriendIdsAsync(me, ct);
+        foreach (var friendId in friendIds)
+        {
             await realtime.PresenceAsync(friendId, dto);
+
+            var notification = new NotificationEntity
+            {
+                UserId = friendId,
+                Type = "game_started",
+                ActorUserId = me,
+                Text = $"{user.DisplayName} is now playing {gameId}."
+            };
+            db.Notifications.Add(notification);
+        }
+
+        await db.SaveChangesAsync(ct);
+
+        foreach (var notification in await db.Notifications.AsNoTracking()
+                     .Where(x => friendIds.Contains(x.UserId)
+                                 && x.ActorUserId == me
+                                 && x.Type == "game_started")
+                     .OrderByDescending(x => x.CreatedAtUtc)
+                     .Take(friendIds.Count)
+                     .ToListAsync(ct))
+        {
+            await realtime.NotificationAsync(notification.UserId, ToNotificationDto(notification));
+        }
 
         return Results.Ok();
     }
@@ -997,6 +1148,21 @@ public static class ApiEndpoints
         var badges = new List<string> { "СИНОЧКУ Citizen" };
         if (user.IsFounder) badges.Insert(0, "СИНОЧКУ GAMES Founder");
 
+        var hasFriend = await db.Friendships.AsNoTracking()
+            .AnyAsync(x => x.UserAId == user.Id || x.UserBId == user.Id, ct);
+        var hasMessage = await db.DirectMessages.AsNoTracking()
+            .AnyAsync(x => x.SenderId == user.Id, ct);
+        var hasGame = sessions.Count > 0;
+
+        var achievements = new[]
+        {
+            new AchievementDto("welcome", "Welcome Aboard", "Created a СИНОЧКУ account.", true),
+            new AchievementDto("first_friend", "Not Alone", "Made your first friend.", hasFriend),
+            new AchievementDto("first_message", "Say Something", "Sent your first message.", hasMessage),
+            new AchievementDto("first_game", "Press PLAY", "Started a game through the social launcher.", hasGame),
+            new AchievementDto("founder", "Founder", "Created the first СИНОЧКУ GAMES account.", user.IsFounder)
+        };
+
         return new UserProfileDto(
             user.Id,
             user.UserName ?? "",
@@ -1013,7 +1179,8 @@ public static class ApiEndpoints
             user.IsFounder,
             totalSeconds,
             showcases,
-            badges);
+            badges,
+            achievements);
     }
 
     private static FriendRequestDto ToRequestDto(
