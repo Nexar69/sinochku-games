@@ -390,7 +390,7 @@ public sealed class SettingsPage : UserControl
         page.Controls.Add(_autoUpdate);
 
         var explanation = _theme.Label(
-            "Stable receives final v2 releases. Beta also receives prereleases such as v2.1.0-beta.1.",
+            "Stable receives final v3 releases. Beta also receives prereleases such as v3.1.0-beta.1.",
             9,
             FontStyle.Regular,
             _theme.Muted);
