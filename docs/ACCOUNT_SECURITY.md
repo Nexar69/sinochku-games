@@ -14,6 +14,10 @@ Production deployments must use HTTPS. The included Caddy setup handles TLS auto
 
 Registration is invite-only. The bootstrap invite should be treated like a secret and replaced after the Founder account exists.
 
+## Account recovery
+
+Signed-in users can generate six one-time recovery codes. Only SHA-256 hashes of those codes are stored on the server. Using a valid recovery code resets the password and invalidates the remaining codes. Store the codes somewhere private and offline if possible.
+
 ## Media uploads
 
 Profile avatars and backgrounds accept PNG, JPEG, or WebP only, with explicit size limits and randomized server-side file names.
