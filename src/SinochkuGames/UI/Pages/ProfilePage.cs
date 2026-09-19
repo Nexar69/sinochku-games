@@ -44,7 +44,14 @@ public sealed class ProfilePage : UserControl
                 ? await _context.Social.Api.MeAsync()
                 : await _context.Social.Api.ProfileAsync(_username);
 
-            BuildProfile(profile);
+            var isFriend = false;
+            if (profile.Id != _context.Social.CurrentUser?.Id)
+            {
+                var friends = await _context.Social.Api.FriendsAsync();
+                isFriend = friends.Any(x => x.Id == profile.Id);
+            }
+
+            BuildProfile(profile, isFriend);
         }
         catch (Exception ex)
         {
@@ -52,7 +59,7 @@ public sealed class ProfilePage : UserControl
         }
     }
 
-    private void BuildProfile(SocialProfile profile)
+    private void BuildProfile(SocialProfile profile, bool isFriend)
     {
         var isMe = profile.Id == _context.Social.CurrentUser?.Id;
 
@@ -148,25 +155,52 @@ public sealed class ProfilePage : UserControl
         }
         else
         {
-            var message = _theme.Button("MESSAGE", 120, 38);
-            message.Click += (_, _) => MessageRequested?.Invoke(this, profile.Username);
-            controls.Controls.Add(message);
-
-            var add = _theme.Button("ADD FRIEND", 130, 38);
-            add.Click += async (_, _) =>
+            if (isFriend)
             {
-                try
+                var message = _theme.Button("MESSAGE", 120, 38);
+                message.Click += (_, _) => MessageRequested?.Invoke(this, profile.Username);
+                controls.Controls.Add(message);
+
+                var remove = _theme.Button("REMOVE FRIEND", 150, 38);
+                remove.Click += async (_, _) =>
                 {
-                    await _context.Social.Api.SendFriendRequestAsync(profile.Username);
-                    add.Text = "REQUEST SENT";
-                    add.Enabled = false;
-                }
-                catch (Exception ex)
+                    var answer = MessageBox.Show(
+                        $"Remove {profile.DisplayName} from your friends?",
+                        Program.Brand,
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question);
+                    if (answer != DialogResult.Yes) return;
+
+                    try
+                    {
+                        await _context.Social.Api.RemoveFriendAsync(profile.Username);
+                        await RefreshAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, Program.Brand);
+                    }
+                };
+                controls.Controls.Add(remove);
+            }
+            else
+            {
+                var add = _theme.Button("ADD FRIEND", 130, 38);
+                add.Click += async (_, _) =>
                 {
-                    MessageBox.Show(ex.Message, Program.Brand);
-                }
-            };
-            controls.Controls.Add(add);
+                    try
+                    {
+                        await _context.Social.Api.SendFriendRequestAsync(profile.Username);
+                        add.Text = "REQUEST SENT";
+                        add.Enabled = false;
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, Program.Brand);
+                    }
+                };
+                controls.Controls.Add(add);
+            }
         }
 
         var info = new Panel
@@ -222,10 +256,10 @@ public sealed class ProfilePage : UserControl
             }
         }
 
-        _ = BuildCommentsAsync(profile);
+        _ = BuildCommentsAsync(profile, isMe || isFriend);
     }
 
-    private async Task BuildCommentsAsync(SocialProfile profile)
+    private async Task BuildCommentsAsync(SocialProfile profile, bool canComment)
     {
         try
         {
@@ -242,33 +276,36 @@ public sealed class ProfilePage : UserControl
 
             AddTitle(panel, "PROFILE COMMENTS", 18);
 
-            var input = new TextBox
+            if (canComment)
             {
-                Location = new Point(20, 54),
-                Width = 780,
-                BackColor = _theme.SurfaceRaised,
-                ForeColor = _theme.Text,
-                PlaceholderText = "Leave a comment…"
-            };
-            panel.Controls.Add(input);
+                var input = new TextBox
+                {
+                    Location = new Point(20, 54),
+                    Width = 780,
+                    BackColor = _theme.SurfaceRaised,
+                    ForeColor = _theme.Text,
+                    PlaceholderText = "Leave a comment…"
+                };
+                panel.Controls.Add(input);
 
-            var post = _theme.Button("POST", 90, 30);
-            post.Location = new Point(812, 52);
-            post.Click += async (_, _) =>
-            {
-                var body = input.Text.Trim();
-                if (body.Length == 0) return;
-                try
+                var post = _theme.Button("POST", 90, 30);
+                post.Location = new Point(812, 52);
+                post.Click += async (_, _) =>
                 {
-                    await _context.Social.Api.CreateProfileCommentAsync(profile.Username, body);
-                    await RefreshAsync();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, Program.Brand);
-                }
-            };
-            panel.Controls.Add(post);
+                    var body = input.Text.Trim();
+                    if (body.Length == 0) return;
+                    try
+                    {
+                        await _context.Social.Api.CreateProfileCommentAsync(profile.Username, body);
+                        await RefreshAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, Program.Brand);
+                    }
+                };
+                panel.Controls.Add(post);
+            }
 
             var flow = new FlowLayoutPanel
             {
