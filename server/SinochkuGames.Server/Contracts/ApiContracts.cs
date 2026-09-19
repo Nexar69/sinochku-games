@@ -28,6 +28,18 @@ public sealed record UpdateProfileRequest(
     string StatusText,
     string AccentHex);
 
+public sealed record PrivacySettingsDto(
+    string ProfileVisibility,
+    bool AllowFriendRequests,
+    bool AllowMessagesFromFriends,
+    bool ShowGameActivity);
+
+public sealed record UpdatePrivacySettingsRequest(
+    string ProfileVisibility,
+    bool AllowFriendRequests,
+    bool AllowMessagesFromFriends,
+    bool ShowGameActivity);
+
 public sealed record FriendDto(
     string Id,
     string Username,
