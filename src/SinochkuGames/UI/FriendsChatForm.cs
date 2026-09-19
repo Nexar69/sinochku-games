@@ -39,8 +39,32 @@ public sealed class FriendsChatForm : Form
         leftHeader.Location = new Point(18, 18);
         split.Panel1.Controls.Add(leftHeader);
 
-        _people.Location = new Point(12, 58);
-        _people.Size = new Size(274, 550);
+        var presence = new ComboBox
+        {
+            Location = new Point(16, 52),
+            Width = 150,
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            BackColor = _theme.SurfaceRaised,
+            ForeColor = _theme.Text
+        };
+        presence.Items.AddRange(new object[] { "Online", "Away", "Busy", "Invisible" });
+        presence.SelectedItem = _context.Social.CurrentUser?.Presence is "Away" or "Busy" or "Invisible"
+            ? _context.Social.CurrentUser.Presence
+            : "Online";
+        presence.SelectedIndexChanged += async (_, _) =>
+        {
+            try
+            {
+                await _context.Social.Api.UpdatePresenceAsync(
+                    presence.SelectedItem?.ToString() ?? "Online");
+                await _context.Social.RefreshMeAsync();
+            }
+            catch { }
+        };
+        split.Panel1.Controls.Add(presence);
+
+        _people.Location = new Point(12, 92);
+        _people.Size = new Size(274, 516);
         _people.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         _people.AutoScroll = true;
         _people.FlowDirection = FlowDirection.TopDown;
