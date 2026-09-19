@@ -263,7 +263,7 @@ public sealed class SettingsPage : UserControl
         var chatBehavior = new CheckBox
         {
             Text = "Open Friends & Chat automatically on launcher start",
-            Checked = _context.Settings.StartFriendsChatMinimized,
+            Checked = _context.Settings.OpenFriendsChatOnStart,
             Location = new Point(28, 126),
             AutoSize = true,
             ForeColor = _theme.Text,
@@ -276,7 +276,7 @@ public sealed class SettingsPage : UserControl
         save.Click += (_, _) =>
         {
             _context.Settings.ShowSocialToasts = toasts.Checked;
-            _context.Settings.StartFriendsChatMinimized = chatBehavior.Checked;
+            _context.Settings.OpenFriendsChatOnStart = chatBehavior.Checked;
             _context.SettingsStore.Save(_context.Settings);
             MessageBox.Show("Notification settings saved.", Program.Brand);
         };
