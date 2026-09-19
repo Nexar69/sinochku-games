@@ -183,7 +183,7 @@ public sealed class CommunityPage : UserControl
         try
         {
             if (InvokeRequired)
-                BeginInvoke(async () => await RefreshAsync());
+                BeginInvoke((Action)(async () => await RefreshAsync()));
             else
                 await RefreshAsync();
         }
