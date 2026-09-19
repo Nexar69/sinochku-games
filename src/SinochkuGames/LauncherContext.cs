@@ -12,4 +12,5 @@ public sealed record LauncherContext(
     LaunchService Launcher,
     UpdateService Updater,
     PlaytimeTracker Playtime,
-    ArtworkService Artwork);
+    ArtworkService Artwork,
+    SocialService Social);

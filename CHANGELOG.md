@@ -1,5 +1,51 @@
 # Changelog
 
+## v3.0.0-alpha.1 — in development
+
+### Accounts and profiles
+- Real invite-only СИНОЧКУ accounts.
+- Username/email sign-in with independently hashed passwords.
+- Secure Windows session persistence with DPAPI.
+- Avatars, profile backgrounds, bio, status and accent color.
+- Public / Friends / Private profile visibility.
+- Friend request, messaging and activity privacy settings.
+- Password changes and one-time recovery codes.
+- Profile badges, achievements, showcases and comments.
+
+### Friends and chat
+- User search and friend requests.
+- Accept, decline and remove friend.
+- SignalR realtime presence.
+- Online, Away, Busy, Invisible and Playing states.
+- Steam-inspired Friends & Chat window.
+- Direct messages, typing indicators and unread counts.
+- Realtime/persistent notifications.
+- Game-start notifications and community activity feed.
+- Friend avatars and profile navigation.
+- Social toast notifications.
+
+### Game presence
+- Supported game process detection updates account presence automatically.
+- Server-backed game sessions and playtime.
+- Recent activity shared with friends when allowed.
+- Game presence returns to Online after exiting.
+
+### Social backend
+- ASP.NET Core 8 + Identity + SignalR + SQLite.
+- JWT bearer authentication.
+- Invite-only registration and Founder invite creation.
+- Authentication/message rate limits.
+- Profile media upload limits.
+- Docker container and Caddy HTTPS deployment.
+- Separate persistent database and media volumes.
+- Social backend CI/tests.
+
+### Launcher
+- Account, Friends & Privacy and Notifications settings.
+- Profile, Friends and Community navigation.
+- v3 updater channel and release workflow.
+- GHCR publishing for the social server.
+
 ## v2.0.0-beta.3 — in development
 
 ### Platform
