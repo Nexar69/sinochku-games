@@ -20,7 +20,8 @@ public sealed record UserProfileDto(
     bool IsFounder,
     long TotalPlaySeconds,
     IReadOnlyList<ShowcaseDto> Showcases,
-    IReadOnlyList<string> Badges);
+    IReadOnlyList<string> Badges,
+    IReadOnlyList<AchievementDto> Achievements);
 
 public sealed record UpdateProfileRequest(
     string DisplayName,
