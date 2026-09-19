@@ -64,5 +64,11 @@ public sealed record SocialActivity(
     DateTimeOffset AtUtc,
     string? GameId);
 
+public sealed record SocialPrivacy(
+    string ProfileVisibility,
+    bool AllowFriendRequests,
+    bool AllowMessagesFromFriends,
+    bool ShowGameActivity);
+
 public sealed record SocialAuthResponse(string AccessToken, SocialProfile User);
 public sealed record SocialInvite(string Code, int MaxUses, int Uses, DateTimeOffset CreatedAtUtc, DateTimeOffset? ExpiresAtUtc);
