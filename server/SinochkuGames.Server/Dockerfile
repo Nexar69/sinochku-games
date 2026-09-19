@@ -3,7 +3,7 @@ WORKDIR /src
 COPY server/SinochkuGames.Server/SinochkuGames.Server.csproj server/SinochkuGames.Server/
 RUN dotnet restore server/SinochkuGames.Server/SinochkuGames.Server.csproj
 COPY server/SinochkuGames.Server/ server/SinochkuGames.Server/
-RUN dotnet publish server/SinochkuGames.Server/SinochkuGames.Server.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish server/SinochkuGames.Server/SinochkuGames.Server.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
