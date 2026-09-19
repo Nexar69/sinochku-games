@@ -186,6 +186,24 @@ public sealed class SocialApiClient : IDisposable
         return new Uri($"{_baseUrl}/{relativeOrAbsolute.TrimStart('/')}");
     }
 
+    public async Task<Image?> DownloadImageAsync(string? relativeOrAbsolute, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(relativeOrAbsolute))
+            return null;
+
+        try
+        {
+            var bytes = await _http.GetByteArrayAsync(MediaUri(relativeOrAbsolute), ct);
+            using var stream = new MemoryStream(bytes);
+            using var temp = Image.FromStream(stream);
+            return new Bitmap(temp);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private async Task<T> GetAsync<T>(string path, CancellationToken ct)
     {
         using var response = await _http.GetAsync($"{_baseUrl}{path}", ct);
