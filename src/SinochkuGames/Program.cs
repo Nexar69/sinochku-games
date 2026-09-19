@@ -6,7 +6,7 @@ namespace SinochkuGames;
 internal static class Program
 {
     public const string Brand = "СИНОЧКУ GAMES™";
-    public const string Version = "2.0.0-beta.3";
+    public const string Version = "3.0.0-alpha.1";
     public const string Repository = "Nexar69/sinochku-games";
 
     [STAThread]
@@ -40,6 +40,7 @@ internal static class Program
             var updater = new UpdateService(settings);
             using var playtime = new PlaytimeTracker(registry, detection, settingsStore, settings);
             var artwork = new ArtworkService(steam);
+            await using var social = new SocialService(settings, settingsStore, registry, detection);
 
             var context = new LauncherContext(
                 settingsStore,
@@ -50,12 +51,23 @@ internal static class Program
                 launcher,
                 updater,
                 playtime,
-                artwork);
+                artwork,
+                social);
 
             if (!settings.FirstRunCompleted)
             {
                 using var setup = new SetupWizardForm(context);
                 setup.ShowDialog();
+            }
+
+            if (settings.SocialEnabled)
+            {
+                var restored = await social.TryRestoreAsync();
+                if (!restored)
+                {
+                    using var auth = new SocialAuthForm(context);
+                    auth.ShowDialog();
+                }
             }
 
             Application.Run(new MainForm(context));
