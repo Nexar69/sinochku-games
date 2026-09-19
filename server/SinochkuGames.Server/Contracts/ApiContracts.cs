@@ -19,7 +19,8 @@ public sealed record UserProfileDto(
     DateTimeOffset CreatedAtUtc,
     bool IsFounder,
     long TotalPlaySeconds,
-    IReadOnlyList<ShowcaseDto> Showcases);
+    IReadOnlyList<ShowcaseDto> Showcases,
+    IReadOnlyList<string> Badges);
 
 public sealed record UpdateProfileRequest(
     string DisplayName,
