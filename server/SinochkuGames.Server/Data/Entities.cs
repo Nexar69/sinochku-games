@@ -96,3 +96,12 @@ public sealed class ProfileComment
     public string Body { get; set; } = "";
     public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
 }
+
+public sealed class RecoveryCode
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string UserId { get; set; } = "";
+    public string CodeHash { get; set; } = "";
+    public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? UsedAtUtc { get; set; }
+}
