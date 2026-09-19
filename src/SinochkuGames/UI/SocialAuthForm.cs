@@ -108,6 +108,16 @@ public sealed class SocialAuthForm : Form
         };
         page.Controls.Add(login);
 
+        var recover = _theme.Button("RECOVER ACCOUNT", 170, 36);
+        recover.Location = new Point(194, 186);
+        recover.Click += (_, _) =>
+        {
+            ApplyServer();
+            using var dialog = new RecoverAccountForm(_context);
+            dialog.ShowDialog(this);
+        };
+        page.Controls.Add(recover);
+
         var note = _theme.Label(
             "This is a separate СИНОЧКУ account. Never enter your Steam password here.",
             9,
