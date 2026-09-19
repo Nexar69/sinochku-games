@@ -401,7 +401,21 @@ public static class ApiEndpoints
             .Take(20)
             .ToListAsync(ct);
 
-        return Results.Ok(matches.Select(SocialQueryService.ToFriend));
+        return Results.Ok(matches.Select(user =>
+        {
+            if (user.ProfileVisibility == "Public")
+                return SocialQueryService.ToFriend(user);
+
+            return new FriendDto(
+                user.Id,
+                user.UserName ?? "",
+                string.IsNullOrWhiteSpace(user.DisplayName) ? user.UserName ?? "" : user.DisplayName,
+                "",
+                "Offline",
+                "",
+                "",
+                user.LastSeenAtUtc);
+        }));
     }
 
     private static async Task<IResult> UserProfileAsync(
