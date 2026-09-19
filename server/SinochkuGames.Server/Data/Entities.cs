@@ -87,3 +87,12 @@ public sealed class ProfileShowcase
     public string Body { get; set; } = "";
     public int SortOrder { get; set; }
 }
+
+public sealed class ProfileComment
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string ProfileUserId { get; set; } = "";
+    public string AuthorUserId { get; set; } = "";
+    public string Body { get; set; } = "";
+    public DateTimeOffset CreatedAtUtc { get; set; } = DateTimeOffset.UtcNow;
+}
