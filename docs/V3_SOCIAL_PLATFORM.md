@@ -8,6 +8,8 @@ Accounts are separate from Steam. The server uses ASP.NET Core Identity for pass
 
 Registration is invite-only. A production server starts with a private bootstrap invite supplied through an environment variable. The first account becomes Founder and can create additional invite codes.
 
+Accounts support authenticated password changes plus one-time recovery codes, so password recovery works without requiring an email provider.
+
 ## Profiles
 
 Profiles support:
@@ -84,4 +86,3 @@ See `server/README.md` and `deploy/.env.example`.
 - Steam passwords are never requested or stored.
 - Chat is private to the server database but is not end-to-end encrypted.
 - Join Game / Invite to Game requires a reliable game-specific lobby/session identifier. v3 does not fake this for CS2; those actions will be added only when the launcher can obtain a valid join target.
-- Email password recovery requires an outbound mail provider and is not enabled until one is configured.
