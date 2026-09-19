@@ -154,6 +154,14 @@ public sealed class SocialAuthForm : Form
                     invite.Text,
                     display.Text);
 
+                var recovery = await _context.Social.Api.GenerateRecoveryCodesAsync();
+                var recoveryText = string.Join(Environment.NewLine, recovery.Codes);
+                Clipboard.SetText(recoveryText);
+                MessageBox.Show(
+                    "Account created! Six one-time recovery codes were copied to your clipboard.\n\n" +
+                    "Save them somewhere private. If you lose your password, these codes can reset it.",
+                    Program.Brand);
+
                 DialogResult = DialogResult.OK;
                 Close();
             }
