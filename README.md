@@ -1,46 +1,87 @@
 # СИНОЧКУ GAMES™
 
-A custom Steam-style Windows game launcher for the СИНОЧКУ meme universe.
+A Steam-inspired Windows game launcher and social platform that somehow grew out of one Counter-Strike 2 rename joke.
 
-> **v2.0.0 is the stable public launcher.** It also contains the bridge updater needed to move Beta-channel users to v3 prereleases when they are published.
-
-## Current games
+## Current game
 
 - **СИНОЧКУ 2** — custom-branded Counter-Strike 2 launched through SteamEdit.
 
-The v2 game registry is data-driven, so future СИНОЧКУ games can be added without hard-wiring new navigation pages.
+The launcher is data-driven and can support more СИНОЧКУ games later without rebuilding navigation around each title.
 
-## v2.0.0 highlights
+## v3 social platform
 
-- Steam-style Library, Game, and Settings pages
-- Search, sorting, Favorites / Installed filters, and recently played ordering
-- Data-driven game definitions and process detection
-- Steam + multi-library auto-detection
-- SteamEdit pre-launch hook
-- First-run setup wizard
-- Live tracked playtime while the launcher is open
-- Per-user Steam custom artwork overrides with embedded fallback art
-- Appearance, Steam, Games, Updates, and About settings
-- Stable / Beta update channels
-- v2 → v3 migration bridge: Stable waits for final v3 releases; Beta may opt into v3 prereleases
-- Automatic and manual GitHub release checks
-- Release notes in update prompts
-- Updater backup/recovery and SHA-256 verification
-- Logs and copyable diagnostics
-- Safe LocalAppData custom-game manifests
-- Automated tests and Windows CI
-- Self-contained single-file Windows builds
+v3 adds real, separate СИНОЧКУ accounts and a self-hostable social backend.
 
-## Repository layout
+### Accounts and profiles
 
-- `src/SinochkuGames/` — v2 launcher
-- `tests/SinochkuGames.Tests/` — v2 tests
-- `docs/V2_ARCHITECTURE.md` — architecture notes
-- `docs/V2_ROADMAP.md` — current roadmap
-- `docs/CUSTOM_GAMES.md` — custom game manifest format
-- root `Program.cs` + `build.ps1` — v1.x launcher kept during the v2 transition
+- invite-only account creation
+- username, email login and display names
+- secure password hashing with ASP.NET Core Identity
+- Windows DPAPI-protected desktop sessions
+- avatar and profile background uploads
+- bio, status text and accent color
+- Online / Away / Busy / Invisible / Playing presence
+- profile privacy controls
+- badges and achievements
+- three customizable profile showcases
+- profile comments
+- tracked game-session playtime and recent activity
+- password changes
 
-## Build v2
+### Friends, chat and community
+
+- user search
+- friend requests and accept/decline/remove
+- realtime friend presence
+- **Friends & Chat** window
+- direct messages
+- typing indicators
+- unread message counters
+- persistent notifications
+- game-start notifications
+- Community friend-activity feed
+- profile navigation from friends/activity
+- desktop-style social toasts
+
+### Launcher platform
+
+The existing v2 launcher features remain:
+
+- Steam-style Library / Game / Settings pages
+- search, sorting, favorites and installed filters
+- Steam and multi-library detection
+- SteamEdit discovery + pre-launch hook
+- custom Steam cover/hero/logo overrides
+- stable/beta update channels
+- signed-release-style SHA-256 verification
+- updater backup and rollback
+- logs and diagnostics
+- safe custom game manifests
+
+## Social server
+
+The real social features are provided by `server/SinochkuGames.Server`:
+
+- ASP.NET Core 8
+- ASP.NET Core Identity
+- JWT auth
+- SignalR realtime events
+- SQLite persistence
+- rate limiting
+- invite-only registration
+- privacy enforcement
+- persistent profile media
+- Docker deployment
+- Caddy HTTPS reverse proxy
+
+See:
+
+- [v3 social architecture](docs/V3_SOCIAL_PLATFORM.md)
+- [account/security notes](docs/ACCOUNT_SECURITY.md)
+- [social server deployment](server/README.md)
+- [custom game manifests](docs/CUSTOM_GAMES.md)
+
+## Build the launcher
 
 ```powershell
 dotnet test tests/SinochkuGames.Tests/SinochkuGames.Tests.csproj -c Release
@@ -50,18 +91,33 @@ dotnet publish src/SinochkuGames/SinochkuGames.csproj \
   -r win-x64 \
   --self-contained true \
   -p:PublishSingleFile=true \
-  -o dist/v2
+  -o dist/v3
 ```
 
-GitHub Actions runs the same validation on Windows for v2 changes.
+## Run the social server locally
 
-## Local data
+```powershell
+$env:ASPNETCORE_ENVIRONMENT="Development"
+$env:SINOCHKU_BOOTSTRAP_INVITE="dev-invite"
+dotnet run --project server/SinochkuGames.Server
+```
 
-Per-user settings, logs, updater staging files, tracked playtime, and optional custom-game manifests are stored below:
+For real use between different PCs, deploy it behind HTTPS. The repository includes Docker Compose + Caddy configuration.
 
-`%LocalAppData%\SinochkuGames`
+## Repository layout
 
-## Branding note
+- `src/SinochkuGames/` — Windows launcher
+- `server/SinochkuGames.Server/` — account/social backend
+- `tests/SinochkuGames.Tests/` — launcher tests
+- `server/SinochkuGames.Server.Tests/` — social backend tests
+- `deploy/` — production Docker/Caddy deployment
+- `docs/` — architecture, security and game-manifest docs
+
+## Important security note
+
+СИНОЧКУ accounts are **not Steam accounts**. The launcher must never ask for a Steam password. Chat is stored on the social server and is not end-to-end encrypted, so do not use it for secrets.
+
+## Branding
 
 **СИНОЧКУ GAMES™** uses ™ as an informal brand mark. It does **not** mean the name is a registered trademark.
 
