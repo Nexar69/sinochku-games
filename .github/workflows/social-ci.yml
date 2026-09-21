@@ -120,5 +120,5 @@ jobs:
           file: server/SinochkuGames.Server/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/sinochku-social:v3.0.0-alpha.1
-            ghcr.io/${{ github.repository_owner }}/sinochku-social:latest
+            ghcr.io/nexar69/sinochku-social:v3.0.0-alpha.1
+            ghcr.io/nexar69/sinochku-social:latest
