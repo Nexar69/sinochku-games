@@ -15,6 +15,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.10" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="..\..\assets\hero.png" Link="Assets\hero.png" />
     <EmbeddedResource Include="..\..\assets\logo.png" Link="Assets\logo.png" />
     <EmbeddedResource Include="..\..\assets\cover.png" Link="Assets\cover.png" />
